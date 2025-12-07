@@ -79,6 +79,9 @@ class MediaListenerService : NotificationListenerService(),
         }.onFailure { Log.e(TAG, "Error adding session listener", it) }
 
         updateActiveSession()
+        if (activeController == null) {
+            updateWidget(reprocessImages = false)
+        }
     }
 
     override fun onActiveSessionsChanged(controllers: List<MediaController>?) {
@@ -86,16 +89,17 @@ class MediaListenerService : NotificationListenerService(),
     }
 
     private fun updateActiveSession(controllers: List<MediaController>? = null) {
-        val currentControllers = controllers ?: mediaSessionManager.activeSessions() ?: return
+        val currentControllers = controllers ?: mediaSessionManager.activeSessions()
 
-        val newController = currentControllers.firstOrNull {
-            it.playbackState?.state == PlaybackState.STATE_PLAYING
-        } ?: currentControllers.firstOrNull() ?: return
+        val newController = currentControllers?.let {
+            it.firstOrNull { c -> c.playbackState?.state == PlaybackState.STATE_PLAYING }
+                ?: it.firstOrNull()
+        }
 
         if (activeController == newController) return
 
         activeController?.unregisterCallback(mediaCallback)
-        activeController = newController.also { it.registerCallback(mediaCallback) }
+        activeController = newController?.also { it.registerCallback(mediaCallback) }
 
         updateWidget(reprocessImages = true)
     }
