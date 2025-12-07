@@ -41,6 +41,7 @@ class MediaListenerService : NotificationListenerService(),
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
     private var lastMetadataHash: Int? = null
+    private var currentRoundedBitmap: Bitmap? = null
 
     private val commandReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -88,6 +89,11 @@ class MediaListenerService : NotificationListenerService(),
         activeController?.unregisterCallback(mediaCallback)
         executor.shutdown()
         pendingIntentCache.clear()
+        
+        // Clean up bitmap to prevent memory leak
+        currentRoundedBitmap?.recycle()
+        currentRoundedBitmap = null
+        
         try {
             mediaSessionManager.removeOnActiveSessionsChangedListener(this)
         } catch (_: SecurityException) {
@@ -221,6 +227,9 @@ class MediaListenerService : NotificationListenerService(),
     }
 
     private fun getLeftRoundedBitmap(bitmap: Bitmap): Bitmap {
+        // Recycle previous rounded bitmap before creating a new one
+        currentRoundedBitmap?.recycle()
+        
         val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -235,6 +244,8 @@ class MediaListenerService : NotificationListenerService(),
         }
         canvas.clipPath(path)
         canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        
+        currentRoundedBitmap = output
         return output
     }
 
