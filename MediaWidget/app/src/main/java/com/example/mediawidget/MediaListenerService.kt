@@ -1,13 +1,9 @@
 package com.example.mediawidget
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.BroadcastReceiver
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -17,16 +13,15 @@ import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.util.Log
-import android.util.LruCache
 import android.widget.RemoteViews
 import androidx.core.graphics.toColorInt
 import androidx.palette.graphics.Palette
 import java.util.concurrent.Executors
+import kotlin.math.roundToInt
 
 /**
  * NotificationListenerService that monitors active media sessions and updates the media widget.
@@ -37,81 +32,53 @@ class MediaListenerService : NotificationListenerService(),
 
     private var activeController: MediaController? = null
     private lateinit var mediaSessionManager: MediaSessionManager
-    private val pendingIntentCache = mutableMapOf<String, PendingIntent>()
-    private val executor = Executors.newSingleThreadExecutor()
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private var lastMetadataHash: Int? = null
-    private var currentRoundedBitmap: Bitmap? = null
-
-    private val commandReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            intent?.let { handleCommand(it) }
-        }
+    private val serviceComponent by lazy(LazyThreadSafetyMode.NONE) {
+        ComponentName(this, MediaListenerService::class.java)
     }
+    private val appWidgetManager by lazy(LazyThreadSafetyMode.NONE) {
+        AppWidgetManager.getInstance(this)
+    }
+    
+    private val paletteExecutor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    
+    private var cachedRoundedBitmap: Bitmap? = null
+    private var lastAlbumArtId: Int? = null
+    private var currentBackgroundColor: Int = DEFAULT_BACKGROUND_COLOR.toColorInt()
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     private val mediaCallback = object : MediaController.Callback() {
-        override fun onPlaybackStateChanged(state: PlaybackState?) {
-            updateWidget()
-        }
-
-        override fun onMetadataChanged(metadata: MediaMetadata?) {
-            updateWidget()
-        }
+        override fun onPlaybackStateChanged(state: PlaybackState?) = updateWidget(reprocessImages = false)
+        override fun onMetadataChanged(metadata: MediaMetadata?) = updateWidget(reprocessImages = true)
     }
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreate() {
         super.onCreate()
-        val filter = IntentFilter().apply {
-            addAction(ACTION_PLAY_PAUSE)
-            addAction(ACTION_NEXT)
-            addAction(ACTION_PREV)
-            addAction(ACTION_OPEN_APP)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(commandReceiver, filter, RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(commandReceiver, filter)
-        }
-
         mediaSessionManager = getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager
-        try {
-            updateActiveSession()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating session", e)
-        }
+        updateActiveSession()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.let { handleCommand(it) }
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(commandReceiver)
+        mediaSessionManager.removeOnActiveSessionsChangedListener(this)
         activeController?.unregisterCallback(mediaCallback)
-        executor.shutdown()
-        pendingIntentCache.clear()
-        
-        // Clean up bitmap to prevent memory leak
-        currentRoundedBitmap?.recycle()
-        currentRoundedBitmap = null
-        
-        try {
-            mediaSessionManager.removeOnActiveSessionsChangedListener(this)
-        } catch (_: SecurityException) {
-            // Permission not granted, ignore
-        }
+        paletteExecutor.shutdownNow()
+        mainHandler.removeCallbacksAndMessages(null)
+        cachedRoundedBitmap?.recycle()
     }
 
     override fun onListenerConnected() {
         super.onListenerConnected()
-        try {
-            mediaSessionManager.addOnActiveSessionsChangedListener(
-                this,
-                ComponentName(this, MediaListenerService::class.java)
-            )
-            updateActiveSession()
-        } catch (_: SecurityException) {
-            // Permission not granted, ignore
-        }
+        runCatching {
+            mediaSessionManager.addOnActiveSessionsChangedListener(this, serviceComponent)
+        }.onFailure { Log.e(TAG, "Error adding session listener", it) }
+
+        updateActiveSession()
     }
 
     override fun onActiveSessionsChanged(controllers: List<MediaController>?) {
@@ -119,38 +86,36 @@ class MediaListenerService : NotificationListenerService(),
     }
 
     private fun updateActiveSession(controllers: List<MediaController>? = null) {
-        val currentControllers = controllers ?: try {
-            mediaSessionManager.getActiveSessions(ComponentName(this, MediaListenerService::class.java))
-        } catch (_: SecurityException) {
-            return
-        }
+        val currentControllers = controllers ?: mediaSessionManager.activeSessions() ?: return
+
+        val newController = currentControllers.firstOrNull {
+            it.playbackState?.state == PlaybackState.STATE_PLAYING
+        } ?: currentControllers.firstOrNull() ?: return
+
+        if (activeController == newController) return
 
         activeController?.unregisterCallback(mediaCallback)
-        activeController = currentControllers.find {
-            it.playbackState?.state == PlaybackState.STATE_PLAYING
-        } ?: currentControllers.firstOrNull()
-        activeController?.registerCallback(mediaCallback)
+        activeController = newController.also { it.registerCallback(mediaCallback) }
 
-        updateWidget()
+        updateWidget(reprocessImages = true)
     }
 
-    private fun updateWidget() {
+    private fun updateWidget(reprocessImages: Boolean = true) {
         val views = RemoteViews(packageName, R.layout.widget_media_control)
-        val defaultBackgroundColor = DEFAULT_BACKGROUND_COLOR.toColorInt()
 
-        activeController?.let { controller ->
-            updateWidgetWithMedia(views, controller, defaultBackgroundColor)
-        } ?: updateWidgetNoMedia(views, defaultBackgroundColor)
+        activeController?.let {
+            updateWidgetWithMedia(views, it, reprocessImages)
+        } ?: updateWidgetNoMedia(views)
 
+        views.setInt(R.id.right_container, "setBackgroundColor", currentBackgroundColor)
         setupClickHandlers(views)
-        pushUpdate(views)
+        
+        appWidgetManager.updateAppWidget(ComponentName(this, MediaWidgetProvider::class.java), views)
     }
 
-    private fun updateWidgetWithMedia(views: RemoteViews, controller: MediaController, defaultBackgroundColor: Int) {
+    private fun updateWidgetWithMedia(views: RemoteViews, controller: MediaController, reprocessImages: Boolean) {
         val metadata = controller.metadata
-        val currentHash = metadata.hashCode()
-        val metadataChanged = currentHash != lastMetadataHash
-        lastMetadataHash = currentHash
+        val isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
 
         views.setTextViewText(
             R.id.track_title,
@@ -160,150 +125,165 @@ class MediaListenerService : NotificationListenerService(),
             R.id.track_artist,
             metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "Unknown Artist"
         )
+        views.setImageViewResource(
+            R.id.btn_play,
+            if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+        )
 
         val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
-        if (albumArt != null) {
-            updateAlbumArt(views, albumArt, metadataChanged, defaultBackgroundColor)
-        } else {
-            setDefaultAlbumArt(views, defaultBackgroundColor)
+        when {
+            reprocessImages && albumArt != null -> updateAlbumArt(views, albumArt)
+            !reprocessImages && cachedRoundedBitmap != null ->
+                views.setImageViewBitmap(R.id.album_art, cachedRoundedBitmap)
+            else -> setDefaultAlbumArt(views)
         }
-
-        val isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
-        views.setImageViewResource(R.id.btn_play, if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
     }
 
-    private fun updateWidgetNoMedia(views: RemoteViews, defaultBackgroundColor: Int) {
-        lastMetadataHash = null
+    private fun updateWidgetNoMedia(views: RemoteViews) {
+        setDefaultAlbumArt(views)
+        currentBackgroundColor = DEFAULT_BACKGROUND_COLOR.toColorInt()
+        
         views.setTextViewText(R.id.track_title, "No Media Playing")
         views.setTextViewText(R.id.track_artist, "Open a media app")
-        setDefaultAlbumArt(views, defaultBackgroundColor)
         views.setImageViewResource(R.id.btn_play, R.drawable.ic_play)
     }
 
-    private fun updateAlbumArt(views: RemoteViews, albumArt: Bitmap, metadataChanged: Boolean, defaultBackgroundColor: Int) {
-        val roundedArt = getLeftRoundedBitmap(albumArt)
-        views.setImageViewBitmap(R.id.album_art, roundedArt)
-
-        if (metadataChanged) {
-            extractAndApplyPalette(views, albumArt, defaultBackgroundColor)
-        }
-    }
-
-    private fun setDefaultAlbumArt(views: RemoteViews, defaultBackgroundColor: Int) {
+    private fun setDefaultAlbumArt(views: RemoteViews) {
+        cachedRoundedBitmap?.recycle()
+        cachedRoundedBitmap = null
+        lastAlbumArtId = null
         views.setImageViewResource(R.id.album_art, R.drawable.ic_album_placeholder)
-        views.setInt(R.id.right_container, "setBackgroundColor", defaultBackgroundColor)
     }
 
-    private fun extractAndApplyPalette(views: RemoteViews, albumArt: Bitmap, defaultBackgroundColor: Int) {
-        executor.execute {
-            val palette = Palette.from(albumArt).generate()
-            val backgroundColor = palette.darkVibrantSwatch?.rgb
+    private fun updateAlbumArt(views: RemoteViews, albumArt: Bitmap) {
+        val albumArtId = albumArt.generationKey()
+
+        if (lastAlbumArtId == albumArtId && cachedRoundedBitmap != null) {
+            views.setImageViewBitmap(R.id.album_art, cachedRoundedBitmap)
+            return
+        }
+
+        val scaledArt = scaleBitmapIfNeeded(albumArt)
+        cachedRoundedBitmap?.recycle()
+        cachedRoundedBitmap = getLeftRoundedBitmap(scaledArt)
+        lastAlbumArtId = albumArtId
+        views.setImageViewBitmap(R.id.album_art, cachedRoundedBitmap)
+
+        extractAndApplyPalette(scaledArt)
+        if (scaledArt != albumArt) scaledArt.recycle()
+    }
+
+    private fun extractAndApplyPalette(bitmap: Bitmap) {
+        val scaledForPalette = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
+        paletteExecutor.execute {
+            if (paletteExecutor.isShutdown) {
+                scaledForPalette.recycle()
+                return@execute
+            }
+
+            val palette = Palette.from(scaledForPalette)
+                .maximumColorCount(16)
+                .generate()
+
+            val newColor = palette.darkVibrantSwatch?.rgb
                 ?: palette.vibrantSwatch?.rgb
                 ?: palette.darkMutedSwatch?.rgb
                 ?: palette.mutedSwatch?.rgb
-                ?: defaultBackgroundColor
-            
-            mainHandler.post {
-                views.setInt(R.id.right_container, "setBackgroundColor", backgroundColor)
-                pushUpdate(views)
+                ?: DEFAULT_BACKGROUND_COLOR.toColorInt()
+
+            scaledForPalette.recycle()
+
+            if (newColor != currentBackgroundColor) {
+                mainHandler.post {
+                    currentBackgroundColor = newColor
+                    updateWidget(reprocessImages = false)
+                }
             }
         }
     }
 
-    private fun setupClickHandlers(views: RemoteViews) {
-        views.setOnClickPendingIntent(R.id.btn_play, getCachedPendingIntent(ACTION_PLAY_PAUSE))
-        views.setOnClickPendingIntent(R.id.btn_next, getCachedPendingIntent(ACTION_NEXT))
-        views.setOnClickPendingIntent(R.id.btn_prev, getCachedPendingIntent(ACTION_PREV))
-        views.setOnClickPendingIntent(
-            R.id.album_art,
-            if (activeController != null) getCachedPendingIntent(ACTION_OPEN_APP) else null
-        )
-    }
+    private fun scaleBitmapIfNeeded(bitmap: Bitmap): Bitmap {
+        if (bitmap.width <= MAX_BITMAP_SIZE && bitmap.height <= MAX_BITMAP_SIZE) return bitmap
 
-    private fun pushUpdate(views: RemoteViews) {
-        val appWidgetManager = AppWidgetManager.getInstance(this)
-        val thisWidget = ComponentName(this, MediaWidgetProvider::class.java)
-        appWidgetManager.updateAppWidget(thisWidget, views)
+        val ratio = bitmap.width.toFloat() / bitmap.height
+        val (newWidth, newHeight) = if (bitmap.width > bitmap.height) {
+            MAX_BITMAP_SIZE to (MAX_BITMAP_SIZE / ratio).roundToInt().coerceAtLeast(1)
+        } else {
+            (MAX_BITMAP_SIZE * ratio).roundToInt().coerceAtLeast(1) to MAX_BITMAP_SIZE
+        }
+
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
     }
 
     private fun getLeftRoundedBitmap(bitmap: Bitmap): Bitmap {
-        // Recycle previous rounded bitmap before creating a new one
-        currentRoundedBitmap?.recycle()
-        
         val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        val rect = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
-
         val path = Path().apply {
             addRoundRect(
-                rect,
+                RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()),
                 floatArrayOf(CORNER_RADIUS, CORNER_RADIUS, 0f, 0f, 0f, 0f, CORNER_RADIUS, CORNER_RADIUS),
                 Path.Direction.CW
             )
         }
         canvas.clipPath(path)
         canvas.drawBitmap(bitmap, 0f, 0f, paint)
-        
-        currentRoundedBitmap = output
         return output
     }
 
-    private fun getCachedPendingIntent(action: String): PendingIntent =
-        pendingIntentCache.getOrPut(action) {
-            val requestCode = when (action) {
-                ACTION_PLAY_PAUSE -> 1
-                ACTION_NEXT -> 2
-                ACTION_PREV -> 3
-                ACTION_OPEN_APP -> 4
-                else -> 0
-            }
-            val intent = Intent(action).apply { setPackage(packageName) }
-            PendingIntent.getBroadcast(
-                this, requestCode, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        }
+    private fun setupClickHandlers(views: RemoteViews) {
+        views.setOnClickPendingIntent(R.id.btn_play, getPendingIntent(ACTION_PLAY_PAUSE))
+        views.setOnClickPendingIntent(R.id.btn_next, getPendingIntent(ACTION_NEXT))
+        views.setOnClickPendingIntent(R.id.btn_prev, getPendingIntent(ACTION_PREV))
+        views.setOnClickPendingIntent(
+            R.id.album_art,
+            activeController?.let { getPendingIntent(ACTION_OPEN_APP) }
+        )
+    }
+
+    private fun getPendingIntent(action: String): PendingIntent {
+        val intent = Intent(this, MediaListenerService::class.java).setAction(action)
+        return PendingIntent.getService(
+            this, action.hashCode(), intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
 
     private fun handleCommand(intent: Intent) {
         when (intent.action) {
-            ACTION_OPEN_APP -> handleOpenApp()
-            else -> handleMediaControl(intent)
-        }
-    }
-
-    private fun handleOpenApp() {
-        activeController?.packageName?.let { openMediaApp(it) }
-    }
-
-    private fun openMediaApp(packageName: String) {
-        try {
-            packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(this)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error opening media app", e)
-        }
-    }
-
-    private fun handleMediaControl(intent: Intent) {
-        val controller = activeController ?: run {
-            updateActiveSession()
-            activeController ?: return
-        }
-
-        when (intent.action) {
-            ACTION_PLAY_PAUSE -> {
-                val controls = controller.transportControls
-                if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) {
-                    controls.pause()
-                } else {
-                    controls.play()
+            ACTION_OPEN_APP -> activeController?.packageName?.let { pkg ->
+                packageManager.getLaunchIntentForPackage(pkg)?.apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(this)
                 }
             }
-            ACTION_NEXT -> controller.transportControls.skipToNext()
-            ACTION_PREV -> controller.transportControls.skipToPrevious()
+            else -> {
+                val controller = controllerOrRefresh() ?: return
+                when (intent.action) {
+                    ACTION_PLAY_PAUSE -> togglePlayback(controller)
+                    ACTION_NEXT -> controller.transportControls.skipToNext()
+                    ACTION_PREV -> controller.transportControls.skipToPrevious()
+                }
+            }
+        }
+    }
+    
+    private fun Bitmap.generationKey(): Int = generationId
+
+    private fun MediaSessionManager.activeSessions(): List<MediaController>? =
+        runCatching { getActiveSessions(serviceComponent) }.getOrNull()
+
+    private fun controllerOrRefresh(): MediaController? =
+        activeController ?: run {
+            updateActiveSession()
+            activeController
+        }
+
+    private fun togglePlayback(controller: MediaController) {
+        val controls = controller.transportControls
+        if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) {
+            controls.pause()
+        } else {
+            controls.play()
         }
     }
 
@@ -311,6 +291,7 @@ class MediaListenerService : NotificationListenerService(),
         private const val TAG = "MediaWidget"
         private const val DEFAULT_BACKGROUND_COLOR = "#2D2D2D"
         private const val CORNER_RADIUS = 28f
+        private const val MAX_BITMAP_SIZE = 512
         
         const val ACTION_PLAY_PAUSE = "com.example.mediawidget.ACTION_PLAY_PAUSE"
         const val ACTION_NEXT = "com.example.mediawidget.ACTION_NEXT"

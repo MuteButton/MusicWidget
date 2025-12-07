@@ -7,6 +7,11 @@ local.properties
 *.iml
 .idea/
 .DS_Store
+.vscode/
+
+# OS
+Thumbs.db
+desktop.ini
 
 # Android
 *.apk
@@ -17,6 +22,11 @@ local.properties
 /captures
 .externalNativeBuild
 .cxx
+*.stacktrace
+.navigation/
+
+# Google Services
+google-services.json
 
 # Generated
 bin/
@@ -25,3 +35,8 @@ out/
 
 # Logs
 *.log
+
+# Keystore files
+*.keystore
+*.jks
+keystore.properties
