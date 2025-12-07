@@ -17,7 +17,6 @@ import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
-import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -39,8 +38,6 @@ class MediaListenerService : NotificationListenerService(),
     private var activeController: MediaController? = null
     private lateinit var mediaSessionManager: MediaSessionManager
     private val pendingIntentCache = mutableMapOf<String, PendingIntent>()
-    private val bitmapCache = LruCache<String, Bitmap>(BITMAP_CACHE_SIZE)
-    private val paletteCache = mutableMapOf<String, Int>()
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
     private var lastMetadataHash: Int? = null
@@ -90,13 +87,11 @@ class MediaListenerService : NotificationListenerService(),
         unregisterReceiver(commandReceiver)
         activeController?.unregisterCallback(mediaCallback)
         executor.shutdown()
-        bitmapCache.evictAll()
-        paletteCache.clear()
         pendingIntentCache.clear()
         try {
             mediaSessionManager.removeOnActiveSessionsChangedListener(this)
         } catch (_: SecurityException) {
-            Log.w(TAG, "Permission not granted")
+            // Permission not granted, ignore
         }
     }
 
@@ -109,7 +104,7 @@ class MediaListenerService : NotificationListenerService(),
             )
             updateActiveSession()
         } catch (_: SecurityException) {
-            Log.w(TAG, "Permission not granted")
+            // Permission not granted, ignore
         }
     }
 
@@ -121,12 +116,11 @@ class MediaListenerService : NotificationListenerService(),
         val currentControllers = controllers ?: try {
             mediaSessionManager.getActiveSessions(ComponentName(this, MediaListenerService::class.java))
         } catch (_: SecurityException) {
-            Log.w(TAG, "Permission not granted")
             return
         }
 
         activeController?.unregisterCallback(mediaCallback)
-        activeController = currentControllers.firstOrNull {
+        activeController = currentControllers.find {
             it.playbackState?.state == PlaybackState.STATE_PLAYING
         } ?: currentControllers.firstOrNull()
         activeController?.registerCallback(mediaCallback)
@@ -135,77 +129,89 @@ class MediaListenerService : NotificationListenerService(),
     }
 
     private fun updateWidget() {
-        val controller = activeController
         val views = RemoteViews(packageName, R.layout.widget_media_control)
         val defaultBackgroundColor = DEFAULT_BACKGROUND_COLOR.toColorInt()
 
-        if (controller != null) {
-            val metadata = controller.metadata
-            val state = controller.playbackState
-            
-            val currentHash = metadata.hashCode()
-            val metadataChanged = currentHash != lastMetadataHash
-            lastMetadataHash = currentHash
-            
-            val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+        activeController?.let { controller ->
+            updateWidgetWithMedia(views, controller, defaultBackgroundColor)
+        } ?: updateWidgetNoMedia(views, defaultBackgroundColor)
 
-            views.setTextViewText(
-                R.id.track_title,
-                metadata?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "Unknown Title"
-            )
-            views.setTextViewText(
-                R.id.track_artist,
-                metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "Unknown Artist"
-            )
+        setupClickHandlers(views)
+        pushUpdate(views)
+    }
 
-            if (albumArt != null) {
-                val cacheKey = "${albumArt.width}x${albumArt.height}_${albumArt.hashCode()}"
-                
-                val roundedArt = bitmapCache.get(cacheKey) ?: getLeftRoundedBitmap(albumArt).also {
-                    bitmapCache.put(cacheKey, it)
-                }
-                views.setImageViewBitmap(R.id.album_art, roundedArt)
+    private fun updateWidgetWithMedia(views: RemoteViews, controller: MediaController, defaultBackgroundColor: Int) {
+        val metadata = controller.metadata
+        val currentHash = metadata.hashCode()
+        val metadataChanged = currentHash != lastMetadataHash
+        lastMetadataHash = currentHash
 
-                val cachedColor = paletteCache[cacheKey]
-                if (cachedColor != null) {
-                    views.setInt(R.id.right_container, "setBackgroundColor", cachedColor)
-                } else if (metadataChanged) {
-                    executor.execute {
-                        val palette = Palette.from(albumArt).generate()
-                        val swatch = palette.darkVibrantSwatch ?: palette.vibrantSwatch
-                            ?: palette.darkMutedSwatch ?: palette.mutedSwatch
-                        val backgroundColor = swatch?.rgb ?: defaultBackgroundColor
-                        paletteCache[cacheKey] = backgroundColor
-                        
-                        mainHandler.post {
-                            views.setInt(R.id.right_container, "setBackgroundColor", backgroundColor)
-                            pushUpdate(views)
-                        }
-                    }
-                    return
-                }
-            } else {
-                views.setImageViewResource(R.id.album_art, R.drawable.ic_album_placeholder)
-                views.setInt(R.id.right_container, "setBackgroundColor", defaultBackgroundColor)
-            }
+        views.setTextViewText(
+            R.id.track_title,
+            metadata?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "Unknown Title"
+        )
+        views.setTextViewText(
+            R.id.track_artist,
+            metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "Unknown Artist"
+        )
 
-            val isPlaying = state?.state == PlaybackState.STATE_PLAYING
-            views.setImageViewResource(R.id.btn_play, if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+        if (albumArt != null) {
+            updateAlbumArt(views, albumArt, metadataChanged, defaultBackgroundColor)
         } else {
-            lastMetadataHash = null
-            views.setTextViewText(R.id.track_title, "No Media Playing")
-            views.setTextViewText(R.id.track_artist, "Open a media app")
-            views.setImageViewResource(R.id.album_art, R.drawable.ic_album_placeholder)
-            views.setInt(R.id.right_container, "setBackgroundColor", defaultBackgroundColor)
-            views.setImageViewResource(R.id.btn_play, R.drawable.ic_play)
+            setDefaultAlbumArt(views, defaultBackgroundColor)
         }
 
+        val isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+        views.setImageViewResource(R.id.btn_play, if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+    }
+
+    private fun updateWidgetNoMedia(views: RemoteViews, defaultBackgroundColor: Int) {
+        lastMetadataHash = null
+        views.setTextViewText(R.id.track_title, "No Media Playing")
+        views.setTextViewText(R.id.track_artist, "Open a media app")
+        setDefaultAlbumArt(views, defaultBackgroundColor)
+        views.setImageViewResource(R.id.btn_play, R.drawable.ic_play)
+    }
+
+    private fun updateAlbumArt(views: RemoteViews, albumArt: Bitmap, metadataChanged: Boolean, defaultBackgroundColor: Int) {
+        val roundedArt = getLeftRoundedBitmap(albumArt)
+        views.setImageViewBitmap(R.id.album_art, roundedArt)
+
+        if (metadataChanged) {
+            extractAndApplyPalette(views, albumArt, defaultBackgroundColor)
+        }
+    }
+
+    private fun setDefaultAlbumArt(views: RemoteViews, defaultBackgroundColor: Int) {
+        views.setImageViewResource(R.id.album_art, R.drawable.ic_album_placeholder)
+        views.setInt(R.id.right_container, "setBackgroundColor", defaultBackgroundColor)
+    }
+
+    private fun extractAndApplyPalette(views: RemoteViews, albumArt: Bitmap, defaultBackgroundColor: Int) {
+        executor.execute {
+            val palette = Palette.from(albumArt).generate()
+            val backgroundColor = palette.darkVibrantSwatch?.rgb
+                ?: palette.vibrantSwatch?.rgb
+                ?: palette.darkMutedSwatch?.rgb
+                ?: palette.mutedSwatch?.rgb
+                ?: defaultBackgroundColor
+            
+            mainHandler.post {
+                views.setInt(R.id.right_container, "setBackgroundColor", backgroundColor)
+                pushUpdate(views)
+            }
+        }
+    }
+
+    private fun setupClickHandlers(views: RemoteViews) {
         views.setOnClickPendingIntent(R.id.btn_play, getCachedPendingIntent(ACTION_PLAY_PAUSE))
         views.setOnClickPendingIntent(R.id.btn_next, getCachedPendingIntent(ACTION_NEXT))
         views.setOnClickPendingIntent(R.id.btn_prev, getCachedPendingIntent(ACTION_PREV))
-        views.setOnClickPendingIntent(R.id.album_art, getCachedPendingIntent(ACTION_OPEN_APP))
-
-        pushUpdate(views)
+        views.setOnClickPendingIntent(
+            R.id.album_art,
+            if (activeController != null) getCachedPendingIntent(ACTION_OPEN_APP) else null
+        )
     }
 
     private fun pushUpdate(views: RemoteViews) {
@@ -220,22 +226,20 @@ class MediaListenerService : NotificationListenerService(),
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         val rect = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
 
-        val path = Path()
-        path.addRoundRect(
-            rect,
-            floatArrayOf(CORNER_RADIUS, CORNER_RADIUS, 0f, 0f, 0f, 0f, CORNER_RADIUS, CORNER_RADIUS),
-            Path.Direction.CW
-        )
+        val path = Path().apply {
+            addRoundRect(
+                rect,
+                floatArrayOf(CORNER_RADIUS, CORNER_RADIUS, 0f, 0f, 0f, 0f, CORNER_RADIUS, CORNER_RADIUS),
+                Path.Direction.CW
+            )
+        }
         canvas.clipPath(path)
         canvas.drawBitmap(bitmap, 0f, 0f, paint)
         return output
     }
 
-
-    private fun getCachedPendingIntent(action: String): PendingIntent {
-        return pendingIntentCache.getOrPut(action) {
-            val intent = Intent(action)
-            intent.setPackage(packageName)
+    private fun getCachedPendingIntent(action: String): PendingIntent =
+        pendingIntentCache.getOrPut(action) {
             val requestCode = when (action) {
                 ACTION_PLAY_PAUSE -> 1
                 ACTION_NEXT -> 2
@@ -243,12 +247,12 @@ class MediaListenerService : NotificationListenerService(),
                 ACTION_OPEN_APP -> 4
                 else -> 0
             }
+            val intent = Intent(action).apply { setPackage(packageName) }
             PendingIntent.getBroadcast(
                 this, requestCode, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }
-    }
 
     private fun handleCommand(intent: Intent) {
         when (intent.action) {
@@ -258,18 +262,12 @@ class MediaListenerService : NotificationListenerService(),
     }
 
     private fun handleOpenApp() {
-        val controller = activeController
-        if (controller != null) {
-            openMediaApp(controller.packageName)
-        } else {
-            openYouTubeMusic()
-        }
+        activeController?.packageName?.let { openMediaApp(it) }
     }
 
     private fun openMediaApp(packageName: String) {
         try {
-            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-            launchIntent?.apply {
+            packageManager.getLaunchIntentForPackage(packageName)?.apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(this)
             }
@@ -278,40 +276,19 @@ class MediaListenerService : NotificationListenerService(),
         }
     }
 
-    private fun openYouTubeMusic() {
-        try {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(YOUTUBE_MUSIC_URL)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            
-            val browsers = packageManager.queryIntentActivities(browserIntent, 0)
-                .filter { 
-                    val pkg = it.activityInfo.packageName
-                    !pkg.contains("music", ignoreCase = true) && 
-                    !pkg.contains("youtube", ignoreCase = true)
-                }
-            
-            if (browsers.isNotEmpty()) {
-                browserIntent.setPackage(browsers.first().activityInfo.packageName)
-                startActivity(browserIntent)
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "Could not open YouTube Music in browser")
-        }
-    }
-
     private fun handleMediaControl(intent: Intent) {
         val controller = activeController ?: run {
             updateActiveSession()
-            activeController
-        } ?: return
+            activeController ?: return
+        }
 
         when (intent.action) {
             ACTION_PLAY_PAUSE -> {
+                val controls = controller.transportControls
                 if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) {
-                    controller.transportControls.pause()
+                    controls.pause()
                 } else {
-                    controller.transportControls.play()
+                    controls.play()
                 }
             }
             ACTION_NEXT -> controller.transportControls.skipToNext()
@@ -321,9 +298,7 @@ class MediaListenerService : NotificationListenerService(),
 
     companion object {
         private const val TAG = "MediaWidget"
-        private const val BITMAP_CACHE_SIZE = 4 * 1024 * 1024
         private const val DEFAULT_BACKGROUND_COLOR = "#2D2D2D"
-        private const val YOUTUBE_MUSIC_URL = "https://music.youtube.com"
         private const val CORNER_RADIUS = 28f
         
         const val ACTION_PLAY_PAUSE = "com.example.mediawidget.ACTION_PLAY_PAUSE"
