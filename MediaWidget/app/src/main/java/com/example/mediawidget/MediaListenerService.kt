@@ -46,7 +46,7 @@ class MediaListenerService : NotificationListenerService(),
     private var lastAlbumArtId: Int? = null
     private var currentBackgroundColor: Int = DEFAULT_BACKGROUND_COLOR.toColorInt()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
+    
     private val mediaCallback = object : MediaController.Callback() {
         override fun onPlaybackStateChanged(state: PlaybackState?) = updateWidget(reprocessImages = false)
         override fun onMetadataChanged(metadata: MediaMetadata?) = updateWidget(reprocessImages = true)
@@ -134,6 +134,15 @@ class MediaListenerService : NotificationListenerService(),
             if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
         )
 
+        // Control wave animation based on playback state
+        if (isPlaying) {
+            views.setViewVisibility(R.id.wave_animating, android.view.View.VISIBLE)
+            views.setViewVisibility(R.id.wave_static, android.view.View.GONE)
+        } else {
+            views.setViewVisibility(R.id.wave_animating, android.view.View.GONE)
+            views.setViewVisibility(R.id.wave_static, android.view.View.VISIBLE)
+        }
+
         val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
         when {
             reprocessImages && albumArt != null -> updateAlbumArt(views, albumArt)
@@ -146,6 +155,10 @@ class MediaListenerService : NotificationListenerService(),
     private fun updateWidgetNoMedia(views: RemoteViews) {
         setDefaultAlbumArt(views)
         currentBackgroundColor = DEFAULT_BACKGROUND_COLOR.toColorInt()
+        
+        // Hide wave animation when no media is playing
+        views.setViewVisibility(R.id.wave_animating, android.view.View.GONE)
+        views.setViewVisibility(R.id.wave_static, android.view.View.INVISIBLE)
         
         views.setTextViewText(R.id.track_title, "No Media Playing")
         views.setTextViewText(R.id.track_artist, "Open a media app")

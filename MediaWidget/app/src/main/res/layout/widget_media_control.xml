@@ -57,15 +57,41 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/controls_layout"
+        <FrameLayout
+            android:id="@+id/controls_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_weight="1">
 
-            <ImageButton
+            <ProgressBar
+                android:id="@+id/wave_animating"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:indeterminateDrawable="@drawable/wave_animation"
+                android:alpha="0.3"
+                android:visibility="invisible" />
+
+            <ImageView
+                android:id="@+id/wave_static"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:scaleType="fitXY"
+                android:alpha="0.3"
+                android:visibility="invisible"
+                android:contentDescription="Playback animation"
+                android:src="@drawable/wave_frame_1" />
+
+            <LinearLayout
+                android:id="@+id/controls_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <ImageButton
                 android:id="@+id/btn_prev"
                 android:layout_width="43dp"
                 android:layout_height="43dp"
@@ -94,5 +120,6 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_next" />
         </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 </LinearLayout>
