@@ -41,23 +41,8 @@ class MediaListenerService : NotificationListenerService(),
     private var currentBackgroundColor: Int = DEFAULT_BACKGROUND_COLOR.toColorInt()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     
-    private var lastOpenAppIntent: PendingIntent? = null
-    private var lastProcessedTitle: String? = null
-    private var lastProcessedPackage: String? = null
-    
-    private var lastProcessedState: Int? = null
-    private var lastProcessedActions: Long? = null
-
     private val mediaCallback = object : MediaController.Callback() {
-        override fun onPlaybackStateChanged(state: PlaybackState?) {
-            val newState = state?.state
-            val newActions = state?.actions
-            if (newState == lastProcessedState && newActions == lastProcessedActions) return
-            
-            lastProcessedState = newState
-            lastProcessedActions = newActions
-            updateWidget(reprocessImages = false)
-        }
+        override fun onPlaybackStateChanged(state: PlaybackState?) = updateWidget(reprocessImages = false)
         override fun onMetadataChanged(metadata: MediaMetadata?) = updateWidget(reprocessImages = true)
         override fun onSessionDestroyed() = updateActiveSession()
     }
@@ -112,9 +97,10 @@ class MediaListenerService : NotificationListenerService(),
         activeController?.unregisterCallback(mediaCallback)
         activeController = newController?.also { it.registerCallback(mediaCallback, handler) }
         
-        // Reset state tracking for new controller
-        lastProcessedState = null
-        lastProcessedActions = null
+        // Clear cache when switching sessions to prevent stale art
+        cachedRoundedBitmap?.recycle()
+        cachedRoundedBitmap = null
+        lastAlbumArtId = null
         
         updateWidget(reprocessImages = true)
     }
@@ -153,12 +139,18 @@ class MediaListenerService : NotificationListenerService(),
         views.setImageViewResource(R.id.btn_play, if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
 
         val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
-        if (reprocessImages && albumArt != null) {
-            updateAlbumArt(views, albumArt)
-        } else if (cachedRoundedBitmap != null) {
-            views.setImageViewBitmap(R.id.album_art, cachedRoundedBitmap)
+        if (reprocessImages) {
+            if (albumArt != null) {
+                updateAlbumArt(views, albumArt)
+            } else {
+                setDefaultAlbumArt(views)
+            }
         } else {
-            setDefaultAlbumArt(views)
+            if (cachedRoundedBitmap != null) {
+                views.setImageViewBitmap(R.id.album_art, cachedRoundedBitmap)
+            } else {
+                setDefaultAlbumArt(views)
+            }
         }
     }
 
@@ -260,22 +252,9 @@ class MediaListenerService : NotificationListenerService(),
     }
     
     private fun getOpenAppIntent(controller: MediaController?): PendingIntent? {
-        if (controller == null) {
-            lastOpenAppIntent = null
-            lastProcessedTitle = null
-            lastProcessedPackage = null
-            return null
-        }
-        
+        if (controller == null) return null
         val targetPkg = controller.packageName
         val title = controller.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)
-
-        if (targetPkg == lastProcessedPackage && title == lastProcessedTitle && lastOpenAppIntent != null) {
-            return lastOpenAppIntent
-        }
-
-        lastProcessedPackage = targetPkg
-        lastProcessedTitle = title
 
         // 1. Try to find the app's notification intent (most reliable)
         try {
@@ -284,30 +263,23 @@ class MediaListenerService : NotificationListenerService(),
                 title != null && it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == title 
             } ?: notifications?.firstOrNull()
             
-            notification?.notification?.contentIntent?.let { 
-                lastOpenAppIntent = it
-                return it 
-            }
+            notification?.notification?.contentIntent?.let { return it }
         } catch (e: Exception) {
             Log.e(TAG, "Error finding notification intent", e)
         }
 
         // 2. Fallback to sessionActivity
         if (controller.sessionActivity != null) {
-            lastOpenAppIntent = controller.sessionActivity
             return controller.sessionActivity
         }
         
         // 3. Last resort: create a generic launch intent for the app
         val launchIntent = packageManager.getLaunchIntentForPackage(targetPkg)
-        val pendingIntent = if (launchIntent != null) {
+        return if (launchIntent != null) {
             PendingIntent.getActivity(this, 0, launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         } else {
             null
         }
-        
-        lastOpenAppIntent = pendingIntent
-        return pendingIntent
     }
 
     private fun getServicePendingIntent(action: String): PendingIntent {
