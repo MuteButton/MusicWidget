@@ -138,6 +138,15 @@ class MediaListenerService : NotificationListenerService(),
         
         views.setImageViewResource(R.id.btn_play, if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
 
+        // Control wave animation based on playback state
+        if (isPlaying) {
+            views.setViewVisibility(R.id.wave_animating, View.VISIBLE)
+            views.setViewVisibility(R.id.wave_static, View.GONE)
+        } else {
+            views.setViewVisibility(R.id.wave_animating, View.GONE)
+            views.setViewVisibility(R.id.wave_static, View.VISIBLE)
+        }
+
         val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
         if (reprocessImages) {
             if (albumArt != null) {
@@ -157,6 +166,11 @@ class MediaListenerService : NotificationListenerService(),
     private fun updateWidgetNoMedia(views: RemoteViews) {
         setDefaultAlbumArt(views)
         currentBackgroundColor = DEFAULT_BACKGROUND_COLOR.toColorInt()
+        
+        // Hide wave animation when no media is playing
+        views.setViewVisibility(R.id.wave_animating, View.GONE)
+        views.setViewVisibility(R.id.wave_static, View.INVISIBLE)
+        
         views.setTextViewText(R.id.track_title, "No Media Playing")
         views.setTextViewText(R.id.track_artist, "Open a media app")
         views.setImageViewResource(R.id.btn_play, R.drawable.ic_play)
