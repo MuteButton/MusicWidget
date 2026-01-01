@@ -205,7 +205,9 @@ class MediaListenerService : NotificationListenerService(),
             views.setViewVisibility(R.id.wave_static, View.VISIBLE)
         }
 
-        val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+        val albumArt = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) 
+            ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_ART)
+
         if (reprocessImages) {
             if (albumArt != null) {
                 updateAlbumArt(views, albumArt)
