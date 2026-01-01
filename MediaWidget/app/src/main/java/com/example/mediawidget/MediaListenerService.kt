@@ -41,9 +41,32 @@ class MediaListenerService : NotificationListenerService(),
     private var currentBackgroundColor: Int = DEFAULT_BACKGROUND_COLOR.toColorInt()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     
-    private val mediaCallback = object : MediaController.Callback() {
-        override fun onPlaybackStateChanged(state: PlaybackState?) = updateWidget(reprocessImages = false)
-        override fun onMetadataChanged(metadata: MediaMetadata?) = updateWidget(reprocessImages = true)
+    private val controllerCallbacks = mutableMapOf<android.media.session.MediaSession.Token, Pair<MediaController, MediaController.Callback>>()
+
+    private inner class MediaControllerCallback(private val controller: MediaController) : MediaController.Callback() {
+        private var lastState: Int? = null
+        private var lastActions: Long? = null
+
+        override fun onPlaybackStateChanged(state: PlaybackState?) {
+            val newState = state?.state
+            val newActions = state?.actions
+            if (newState == lastState && newActions == lastActions) return
+            
+            lastState = newState
+            lastActions = newActions
+
+            // If this controller started playing, or if it's the active one, re-evaluate everything
+            if (newState == PlaybackState.STATE_PLAYING || controller.sessionToken == activeController?.sessionToken) {
+                updateActiveSession()
+            }
+        }
+
+        override fun onMetadataChanged(metadata: MediaMetadata?) {
+            if (controller.sessionToken == activeController?.sessionToken) {
+                updateWidget(reprocessImages = true)
+            }
+        }
+        
         override fun onSessionDestroyed() = updateActiveSession()
     }
 
@@ -59,7 +82,10 @@ class MediaListenerService : NotificationListenerService(),
 
     override fun onDestroy() {
         super.onDestroy()
-        activeController?.unregisterCallback(mediaCallback)
+        controllerCallbacks.values.forEach { (controller, callback) ->
+            controller.unregisterCallback(callback)
+        }
+        controllerCallbacks.clear()
         paletteExecutor.shutdown()
         try {
             mediaSessionManager.removeOnActiveSessionsChangedListener(this)
@@ -86,16 +112,23 @@ class MediaListenerService : NotificationListenerService(),
     private fun updateActiveSession(controllers: List<MediaController>? = null) {
         val currentControllers = controllers ?: try { 
             mediaSessionManager.getActiveSessions(serviceComponent) 
-        } catch (e: SecurityException) { null }
+        } catch (e: SecurityException) { emptyList() }
 
+        // 1. Manage Callbacks: Listen to ALL active sessions
+        registerCallbacks(currentControllers)
+
+        // 2. Find the best controller to display (Prioritize Playing)
         val newController = currentControllers?.firstOrNull { 
             it.playbackState?.state == PlaybackState.STATE_PLAYING 
         } ?: currentControllers?.firstOrNull()
 
-        if (newController?.sessionToken == activeController?.sessionToken) return
+        if (newController?.sessionToken == activeController?.sessionToken) {
+            // Even if controller is same, state might have changed (e.g. Paused), so update widget
+            updateWidget(reprocessImages = false)
+            return
+        }
 
-        activeController?.unregisterCallback(mediaCallback)
-        activeController = newController?.also { it.registerCallback(mediaCallback, handler) }
+        activeController = newController
         
         // Clear cache when switching sessions to prevent stale art
         cachedRoundedBitmap?.recycle()
@@ -103,6 +136,31 @@ class MediaListenerService : NotificationListenerService(),
         lastAlbumArtId = null
         
         updateWidget(reprocessImages = true)
+    }
+
+    private fun registerCallbacks(controllers: List<MediaController>?) {
+        if (controllers == null) return
+        
+        val newTokens = controllers.map { it.sessionToken }.toSet()
+        
+        // Remove old callbacks
+        val iterator = controllerCallbacks.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.key !in newTokens) {
+                entry.value.first.unregisterCallback(entry.value.second)
+                iterator.remove()
+            }
+        }
+
+        // Add new callbacks
+        controllers.forEach { controller ->
+            if (!controllerCallbacks.containsKey(controller.sessionToken)) {
+                val callback = MediaControllerCallback(controller)
+                controller.registerCallback(callback, handler)
+                controllerCallbacks[controller.sessionToken] = Pair(controller, callback)
+            }
+        }
     }
 
     private fun updateWidget(reprocessImages: Boolean = true) {
