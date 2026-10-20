@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="glass_colors">Full-size widget colors</string>
+    <string name="classic_glass">Classic glass</string>
+    <string name="artwork_glass">Artwork glass</string>
+    <string name="glass_colors_selected">Colors: %1$s</string>
+</resources>

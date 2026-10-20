@@ -24,5 +24,8 @@
         <Button android:id="@+id/choose_player_button" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:minHeight="56dp" android:layout_marginTop="8dp" android:text="@string/setup_choose_player"
             android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
+        <Button android:id="@+id/color_mode_button" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:layout_marginTop="16dp" android:text="@string/glass_colors"
+            android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
     </LinearLayout>
 </ScrollView>

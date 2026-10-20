@@ -27,6 +27,17 @@ class MainActivity : AppCompatActivity() {
             } else Toast.makeText(this, R.string.setup_manual_widget, Toast.LENGTH_LONG).show()
         }
         findViewById<Button>(R.id.choose_player_button).setOnClickListener { choosePlayer(false) }
+        findViewById<Button>(R.id.color_mode_button).setOnClickListener {
+            val preferences = getSharedPreferences(WidgetRenderer.PREFS, MODE_PRIVATE)
+            AlertDialog.Builder(this).setTitle(R.string.glass_colors)
+                .setSingleChoiceItems(arrayOf(getString(R.string.classic_glass), getString(R.string.artwork_glass)),
+                    if (preferences.getBoolean(ArtworkColors.PREFERENCE, false)) 1 else 0) { dialog, choice ->
+                    preferences.edit().putBoolean(ArtworkColors.PREFERENCE, choice == 1).apply()
+                    updateUi()
+                    MediaWidgetProvider.refresh(this)
+                    dialog.dismiss()
+                }.setNegativeButton(android.R.string.cancel, null).show()
+        }
         if (savedInstanceState == null && intent.action == ACTION_OPEN_PLAYER) openPlayer()
     }
 
@@ -43,6 +54,8 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.add_widget_button).isEnabled = access
         val preferences = getSharedPreferences(WidgetRenderer.PREFS, MODE_PRIVATE)
         val selected = preferences.getString(WidgetRenderer.PREFERRED_PLAYER, null)
+        findViewById<Button>(R.id.color_mode_button).text = getString(R.string.glass_colors_selected,
+            getString(if (preferences.getBoolean(ArtworkColors.PREFERENCE, false)) R.string.artwork_glass else R.string.classic_glass))
         findViewById<TextView>(R.id.player_status).text = if (selected == null) getString(R.string.setup_player_automatic)
             else getString(R.string.setup_player_selected, WidgetRenderer.appLabel(this, selected))
     }

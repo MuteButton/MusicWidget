@@ -136,7 +136,7 @@ internal object V5Artwork {
 
     @RequiresApi(Build.VERSION_CODES.S)
     fun bind(context: Context, views: RemoteViews, widthDp: Float, hasMedia: Boolean, connected: Boolean,
-             active: Boolean = true, enabledMask: Int = 7) {
+             active: Boolean = true, enabledMask: Int = 7, palette: ArtworkColors.Palette? = null) {
         val scale = widthDp * context.resources.displayMetrics.density / 1030f
         fun size(id: Int, width: Float, height: Float) {
             views.setViewLayoutWidth(id, width * scale, TypedValue.COMPLEX_UNIT_PX)
@@ -148,7 +148,14 @@ internal object V5Artwork {
             views.setViewLayoutMargin(id, RemoteViews.MARGIN_TOP, y * scale, TypedValue.COMPLEX_UNIT_PX)
         }
         listOf(R.id.glass_surface, R.id.idle_state, R.id.media_state).forEach { size(it, 1030f, 225f) }
-        views.setImageViewBitmap(R.id.glass_surface, if (hasMedia) playbackSurface(context, active, enabledMask) else idle(context, connected))
+        val base = if (hasMedia) playbackSurface(context, active, enabledMask) else idle(context, connected)
+        views.setImageViewBitmap(R.id.glass_surface, if (hasMedia && palette != null)
+            ArtworkColors.glass(base, palette, (enabledMask and 7) or (if (active) 8 else 0)) else base)
+        views.setTextColor(R.id.track_artist, palette?.caption ?: 0xff9897ff.toInt())
+        views.setColorStateList(R.id.progress_bar, "setProgressTintList",
+            palette?.let { android.content.res.ColorStateList.valueOf(it.accent) })
+        views.setColorStateList(R.id.progress_bar, "setProgressBackgroundTintList",
+            palette?.let { android.content.res.ColorStateList.valueOf((it.accent and 0x00ffffff) or 0x50000000) })
         place(R.id.idle_title, 310f, 80f, 390f, 40f)
         place(R.id.idle_subtitle, 310f, 125f, 390f, 40f)
         place(R.id.btn_open, 722f, 54f, 260f, 117f)
