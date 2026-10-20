@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/status_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/permission_instruction"
-        android:gravity="center"
-        android:textSize="18sp"
-        android:layout_marginBottom="24dp"/>
-
-    <Button
-        android:id="@+id/grant_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/grant_permission"/>
-
-</LinearLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#101629" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:gravity="center_vertical" android:padding="28dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/setup_title" android:textSize="32sp" android:textStyle="bold" android:textColor="#F5F2FF" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="@string/setup_description"
+            android:textSize="16sp" android:textColor="#B8C8EE" android:lineSpacingExtra="4dp" />
+        <TextView android:id="@+id/status_text" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="32dp" android:text="@string/setup_permission"
+            android:textSize="16sp" android:textColor="#E9E8FA" android:lineSpacingExtra="4dp" />
+        <Button android:id="@+id/grant_button" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:layout_marginTop="20dp" android:text="@string/grant_permission"
+            android:textAllCaps="false" android:backgroundTint="#6484E8" android:textColor="#FFFFFF" />
+        <Button android:id="@+id/add_widget_button" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:layout_marginTop="8dp" android:text="@string/setup_add_widget"
+            android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
+        <TextView android:id="@+id/player_status" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="28dp" android:text="@string/setup_player_automatic"
+            android:textSize="14sp" android:textColor="#B8C8EE" />
+        <Button android:id="@+id/choose_player_button" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:layout_marginTop="8dp" android:text="@string/setup_choose_player"
+            android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
+    </LinearLayout>
+</ScrollView>

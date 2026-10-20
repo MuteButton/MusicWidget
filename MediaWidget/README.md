@@ -5,10 +5,10 @@ An Android widget that displays currently playing media with album art and playb
 ## Features
 
 - 🎵 Displays current track info (title, artist, album art)
-- 🎨 Dynamic background color extracted from album art
+- 🎨 Blue-purple glass design with compact and full layouts
 - ⏯️ Playback controls (play/pause, next, previous)
 - 🖼️ Click album art to open the active media app
-- 🌐 Opens YouTube Music in browser when no media is playing
+- 🌐 Open App remembers your last player or uses your chosen default
 - ⚡ Optimized with intelligent caching for smooth performance
 
 ## Installation
@@ -34,7 +34,7 @@ An Android widget that displays currently playing media with album art and playb
 
 ## Requirements
 
-- Android 8.0 (API 26) or higher
+- Android 7.0 (API 24) or higher
 - Notification access permission (to read media playback info)
 
 ## Building from Source
@@ -69,3 +69,15 @@ Contributions are welcome! Feel free to submit issues or pull requests.
 ## Support
 
 If you encounter any issues or have suggestions, please open an issue on GitHub.
+
+## Widget behavior and development checks
+
+The widget switches between an actionable idle/setup state and a playback state with artwork, supported transport controls, and elapsed/remaining time. Playback progress is a display, not a seek slider. Unknown-duration media hides progress. A narrow widget uses a compact layout; progress is hidden below 120dp height in that layout. The full layout on Android 12+ uses the supplied v5 raster skins with live text and aspect-preserving artwork with a faded continuation. Older Android versions retain the native gradient layout. Neither captures the wallpaper.
+
+Notification access is required. The app reads media sessions locally; it does not upload media information. `Open App` uses the preferred player chosen in setup, or remembers the last external player. Artwork and track text open the active session's player.
+
+Rendering caches bounded artwork and a fixed set of glass surfaces and control skins. The v5 full card preserves the supplied 1030:225 aspect ratio in both states, centered in its launcher allocation. Its coordinates and typography scale together; the launcher controls outer placement. While playback advances, progress-only updates run once per second, using consistent unpadded minute formatting. Timers stop while the screen is off, playback is paused, or no widget exists. Session/state changes update immediately.
+
+V5 controls share one rendered surface to avoid separate scaling seams, with independent accessible click targets and supported-action states. Missing artwork uses the same crop/fade geometry. The renderer caches one bounded cover, weakly references its source, and avoids generating the legacy cover when only v5 widgets exist. Native-resolution idle is verified RGB-identical to the reference; live playback remains an approximation. See the fidelity report for measured differences and emulator evidence.
+
+Build and check with `gradlew assembleDebug testDebugUnitTest lintDebug`. The debug APK includes a deterministic silent media player for emulator testing; the release source set excludes it. See [emulator test instructions](tools/EMULATOR_WIDGET_TESTS.md), the reproducible [acceptance script](tools/Test-WidgetEmulator.ps1), and [reference fidelity status](tools/REFERENCE_FIDELITY.md). Debug fixture screenshots use test metadata, a reference cover crop for the first track, and synthetic artwork for the other tracks; they do not show a third-party music service.

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/glass_surface" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center" android:scaleType="fitXY" android:importantForAccessibility="no" android:contentDescription="@null" />
+    <FrameLayout android:id="@+id/idle_state" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center">
+        <TextView android:id="@+id/idle_title" android:layout_width="140dp" android:layout_height="20dp" android:includeFontPadding="false" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+        <TextView android:id="@+id/idle_subtitle" android:layout_width="140dp" android:layout_height="20dp" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" />
+        <TextView android:id="@+id/btn_open" android:layout_width="95dp" android:layout_height="43dp" android:gravity="center" android:background="?android:attr/selectableItemBackgroundBorderless" android:maxLines="1" />
+    </FrameLayout>
+    <FrameLayout android:id="@+id/media_state" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center" android:visibility="gone">
+        <ImageView android:id="@+id/album_art" android:layout_width="100dp" android:layout_height="78dp" android:scaleType="fitXY" android:contentDescription="@string/widget_open_player" />
+        <FrameLayout android:id="@+id/text_info" android:layout_width="118dp" android:layout_height="31dp">
+            <TextView android:id="@+id/track_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:includeFontPadding="false" android:fontFamily="sans-serif-medium" android:textScaleX="1.02" android:maxLines="1" android:ellipsize="end" android:textColor="#FFF9FC" />
+            <TextView android:id="@+id/track_artist" android:layout_width="match_parent" android:layout_height="wrap_content" android:includeFontPadding="false" android:textScaleX="1.08" android:maxLines="1" android:ellipsize="end" android:textColor="#9897FF" />
+        </FrameLayout>
+        <ImageButton android:id="@+id/btn_prev" android:layout_width="37dp" android:layout_height="38dp" android:padding="0dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:scaleType="fitXY" android:contentDescription="@string/widget_previous" />
+        <ImageButton android:id="@+id/btn_play" android:layout_width="44dp" android:layout_height="42dp" android:padding="0dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:scaleType="fitXY" android:contentDescription="@string/widget_play" />
+        <ImageButton android:id="@+id/btn_next" android:layout_width="34dp" android:layout_height="38dp" android:padding="0dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:scaleType="fitXY" android:contentDescription="@string/widget_next" />
+        <LinearLayout android:id="@+id/progress_container" android:layout_width="236dp" android:layout_height="21dp" android:orientation="vertical">
+            <ProgressBar android:id="@+id/progress_bar" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:indeterminate="false" android:max="1000" android:progressTint="@null" android:progressBackgroundTint="@null" android:progressDrawable="@drawable/widget_progress_v5" android:importantForAccessibility="yes" />
+            <LinearLayout android:id="@+id/time_row" android:layout_width="match_parent" android:layout_height="14dp" android:orientation="horizontal">
+                <Chronometer android:id="@+id/elapsed_time" android:textScaleX="1.22" android:fontFamily="sans-serif-condensed" android:textFontWeight="500" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:includeFontPadding="false" android:textColor="#E6DFFF" android:importantForAccessibility="no" />
+                <Chronometer android:id="@+id/remaining_time" android:textScaleX="1.22" android:fontFamily="sans-serif-condensed" android:textFontWeight="500" android:layout_width="wrap_content" android:layout_height="match_parent" android:includeFontPadding="false" android:textColor="#E6DFFF" android:importantForAccessibility="no" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>
