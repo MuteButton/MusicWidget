@@ -161,7 +161,7 @@ internal object V5Artwork {
         views.setViewPadding(R.id.btn_open,0,if (connected) 0 else (10*scale).toInt(),0,0)
         place(R.id.album_art, 0f, 0f, 307f, 225f)
         place(R.id.text_info, 314f, 49f, 325f, 84f)
-        place(R.id.track_title, 0f, 0f, 325f, 42f)
+        place(R.id.title_container, 0f, 0f, 325f, 42f)
         place(R.id.track_artist, 0f, 42f, 325f, 42f)
         place(R.id.btn_prev, 650f, 40f, 102f, 104f)
         place(R.id.btn_play, 754f, 32f, 121f, 114f)

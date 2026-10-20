@@ -35,7 +35,14 @@ $idleBounds = (Find-Node $ui 'idle_state').bounds
 Screenshot 'idle'
 Tap-Node 'btn_open'
 $ui = Read-Ui
-Assert-True ($null -ne $ui.SelectSingleNode("//node[@text='Choose media app']")) 'Open App opens the media app chooser'
+$chooser=$null -ne $ui.SelectSingleNode("//node[@text='Choose media app']")
+$playerVisible=$false
+if (-not $chooser) {
+    $preferences=[xml](Invoke-Adb @('shell','run-as','com.example.mediawidget','cat','shared_prefs/media_widget.xml'))
+    $players=@($preferences.map.string | Where-Object {$_.name -in @('preferred_player','last_player')} | ForEach-Object {$_.'#text'})
+    $playerVisible=@($ui.SelectNodes('//node') | Where-Object {$_.package -in $players}).Count -gt 0
+}
+Assert-True ($chooser -or $playerVisible) 'Open App opens the chooser or configured/remembered media player'
 Invoke-Adb @('shell','input','keyevent','KEYCODE_BACK') | Out-Null
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 Show-WidgetPage

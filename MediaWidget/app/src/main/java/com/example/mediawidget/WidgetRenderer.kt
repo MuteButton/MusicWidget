@@ -26,6 +26,8 @@ import android.view.View
 import android.widget.RemoteViews
 
 internal object WidgetRenderer {
+    private val titleHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val titleTasks = mutableMapOf<Int, Runnable>()
     private var selectedToken: MediaSession.Token? = null
     private var artToken: MediaSession.Token? = null
     private var artGeneration: Int? = null
@@ -91,6 +93,7 @@ internal object WidgetRenderer {
         else if (v5(context, id)) R.layout.widget_media_v5 else R.layout.widget_media_control
 
     fun renderAll(context: Context, controller: MediaController?) {
+        cancelTitleScrolls()
         selectedToken = controller?.sessionToken
         val ids = widgetIds(context)
         if (ids.isEmpty()) return
@@ -158,6 +161,7 @@ internal object WidgetRenderer {
                 ?: description?.title?.toString()?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_title)
             val artist = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)?.takeIf { it.isNotBlank() }
                 ?: description?.subtitle?.toString()?.takeIf { it.isNotBlank() } ?: appLabel(context, controller.packageName)
+            if (v5(context, id)) bindTitle(context, views, id, controller, title, false, widthOverride)
             views.setTextViewText(R.id.track_title, title)
             views.setTextViewText(R.id.track_artist, artist)
             views.setContentDescription(R.id.album_art, context.getString(R.string.open_current_track, title))
@@ -189,6 +193,79 @@ internal object WidgetRenderer {
             .putExtra(MediaWidgetProvider.EXTRA_SESSION, controller.sessionToken)
         views.setOnClickPendingIntent(id, if (enabled) PendingIntent.getBroadcast(context, action.hashCode(), intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE) else null)
+    }
+
+    private fun bindTitle(context: Context, views: RemoteViews, id: Int, controller: MediaController,
+                          title: String, scroll: Boolean, widthOverride: Float? = null) {
+        val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val width = widthOverride ?: AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
+            .getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374).toFloat()
+        val label = RemoteViews(context.packageName,
+            if (scroll) R.layout.widget_title_marquee else R.layout.widget_title_static)
+        label.setTextViewText(R.id.track_title, title)
+        label.setTextViewTextSize(R.id.track_title, android.util.TypedValue.COMPLEX_UNIT_PX,
+            32f * width * context.resources.displayMetrics.density / 1030f)
+        val intent = Intent(context, MediaWidgetProvider::class.java)
+            .setAction(MediaWidgetProvider.ACTION_SCROLL_TITLE)
+            .setData(Uri.Builder().scheme("mediawidget").authority("title").appendPath(id.toString())
+                .appendPath(controller.sessionToken.hashCode().toString()).build())
+            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+            .putExtra(MediaWidgetProvider.EXTRA_SESSION, controller.sessionToken)
+            .putExtra(MediaWidgetProvider.EXTRA_TITLE, title)
+        label.setOnClickPendingIntent(R.id.track_title, PendingIntent.getBroadcast(context, id, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+        views.removeAllViews(R.id.title_container)
+        views.addView(R.id.title_container, label)
+    }
+
+    fun scrollTitle(context: Context, id: Int, controller: MediaController, expectedTitle: String?) {
+        if (id !in widgetIds(context) || !v5(context, id)) return
+        val title = controller.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() }
+            ?: controller.metadata?.description?.title?.toString()?.takeIf { it.isNotBlank() }
+            ?: context.getString(R.string.unknown_title)
+        if (title != expectedTitle) return
+        val app = context.applicationContext
+        val manager = AppWidgetManager.getInstance(app)
+        val landscape = app.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val widthDp = manager.getAppWidgetOptions(id).getInt(
+            if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374)
+        val density = app.resources.displayMetrics.density
+        val scale = widthDp * density / 1030f
+        val paint = android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = 32f * scale
+            textScaleX = 1.02f
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+        }
+        val lineWidth = android.text.Layout.getDesiredWidth(title.replace('\n', ' '), paint)
+        val viewport = 325f * scale
+        titleTasks.remove(id)?.let { titleHandler.removeCallbacks(it) }
+        fun display(scroll: Boolean) {
+            val views = RemoteViews(app.packageName, R.layout.widget_media_v5)
+            bindTitle(app, views, id, controller, title, scroll)
+            manager.partiallyUpdateAppWidget(id, views)
+        }
+        display(false)
+        if (lineWidth <= viewport) return
+        // Android's native marquee travels line width + one-third viewport at
+        // 30 dp/s, then holds for 1.2 s. Restore the original ellipsis afterward.
+        // Only two delayed updates; the launcher handles every animation frame.
+        val duration = ((lineWidth + viewport / 3f) / (30f * density) * 1000).toLong() + 1700L
+        val start = Runnable {
+            display(true)
+            val restore = Runnable {
+                titleTasks.remove(id)
+                display(false)
+            }
+            titleTasks[id] = restore
+            titleHandler.postDelayed(restore, duration)
+        }
+        titleTasks[id] = start
+        titleHandler.postDelayed(start, 600L)
+    }
+
+    fun cancelTitleScrolls() {
+        titleTasks.values.forEach { titleHandler.removeCallbacks(it) }
+        titleTasks.clear()
     }
 
     fun updateProgress(context: Context, controller: MediaController) {

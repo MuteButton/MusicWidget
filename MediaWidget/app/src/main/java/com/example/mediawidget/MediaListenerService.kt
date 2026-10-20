@@ -35,7 +35,7 @@ class MediaListenerService : NotificationListenerService(),
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) {
                 handler.removeCallbacks(tick)
-                active?.let { WidgetRenderer.updateProgress(this@MediaListenerService, it) }
+                WidgetRenderer.renderAll(this@MediaListenerService, active)
             }
             else refresh()
         }
@@ -111,6 +111,7 @@ class MediaListenerService : NotificationListenerService(),
     }
 
     private fun disconnect() {
+        WidgetRenderer.cancelTitleScrolls()
         connected = false
         if (instance === this) instance = null
         handler.removeCallbacksAndMessages(null)

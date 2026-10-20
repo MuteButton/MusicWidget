@@ -10,7 +10,9 @@
     <FrameLayout android:id="@+id/media_state" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center" android:visibility="gone">
         <ImageView android:id="@+id/album_art" android:layout_width="100dp" android:layout_height="78dp" android:scaleType="fitXY" android:contentDescription="@string/widget_open_player" />
         <FrameLayout android:id="@+id/text_info" android:layout_width="118dp" android:layout_height="31dp">
-            <TextView android:id="@+id/track_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:includeFontPadding="false" android:fontFamily="sans-serif-medium" android:textScaleX="1.02" android:maxLines="1" android:ellipsize="end" android:textColor="#FFF9FC" />
+            <FrameLayout android:id="@+id/title_container" android:layout_width="match_parent" android:layout_height="42dp">
+                <include layout="@layout/widget_title_static" />
+            </FrameLayout>
             <TextView android:id="@+id/track_artist" android:layout_width="match_parent" android:layout_height="wrap_content" android:includeFontPadding="false" android:textScaleX="1.08" android:maxLines="1" android:ellipsize="end" android:textColor="#9897FF" />
         </FrameLayout>
         <ImageButton android:id="@+id/btn_prev" android:layout_width="37dp" android:layout_height="38dp" android:padding="0dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:scaleType="fitXY" android:contentDescription="@string/widget_previous" />

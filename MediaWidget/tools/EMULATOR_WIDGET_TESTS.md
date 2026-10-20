@@ -1,5 +1,9 @@
 # Debug media fixture and emulator checks
 
+## Tap-to-scroll titles
+
+`Test-WidgetMarquee.ps1` exercises the Android 12+ full layout on the actual launcher. It captures and hashes title pixels before, during, and after a tap; checks exact restoration, repeat taps, stationary short titles, full accessible text, track-change cancellation, and advancing playback timestamps during scrolling. Screenshots/results are written to `artifacts/marquee-acceptance`. The native animation runs in the launcher, not in the app's tick handler. Run the core and extended suites as regression checks after changing title rendering.
+
 `app/src/debug` is merged only into debug builds. It creates a real Android `MediaSession`, a media-style foreground notification, and silent looping audio. It does not require a music account or network. The first cover is the full supplied v5 artwork sprite, including its precomposed glass continuation; it is not an original clean album cover. Subsequent covers are generated square test artwork. Production rendering uses an aspect-preserving crop and real adjacent pixels for the fade. No test player or exported control entry point ships in release builds.
 
 Use the installed SDK's `adb` and the emulator's serial. Examples below omit `-s emulator-5554` when only one device is connected.
