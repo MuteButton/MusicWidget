@@ -129,7 +129,7 @@ internal object WidgetRenderer {
                 (if(canToggle(state))2 else 0) or
                 (if(actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L)4 else 0)
             val palette = if (context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                    .getBoolean(ArtworkColors.PREFERENCE, false)) ArtworkColors.from(controller?.let { rawAlbumArt(it) }) else null
+                    .getBoolean(ArtworkColors.PREFERENCE, true)) ArtworkColors.from(controller?.let { rawAlbumArt(it) }) else null
             V5Artwork.bind(context, views, widthOverride ?: widthDp.toFloat(), hasMedia, hasAccess(context),isPlaybackActive(state),enabledMask,palette)
         } else if (!compact(context, id)) {
             val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE

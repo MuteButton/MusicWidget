@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
             val preferences = getSharedPreferences(WidgetRenderer.PREFS, MODE_PRIVATE)
             AlertDialog.Builder(this).setTitle(R.string.glass_colors)
                 .setSingleChoiceItems(arrayOf(getString(R.string.classic_glass), getString(R.string.artwork_glass)),
-                    if (preferences.getBoolean(ArtworkColors.PREFERENCE, false)) 1 else 0) { dialog, choice ->
+                    if (preferences.getBoolean(ArtworkColors.PREFERENCE, true)) 1 else 0) { dialog, choice ->
                     preferences.edit().putBoolean(ArtworkColors.PREFERENCE, choice == 1).apply()
                     updateUi()
                     MediaWidgetProvider.refresh(this)
@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         val preferences = getSharedPreferences(WidgetRenderer.PREFS, MODE_PRIVATE)
         val selected = preferences.getString(WidgetRenderer.PREFERRED_PLAYER, null)
         findViewById<Button>(R.id.color_mode_button).text = getString(R.string.glass_colors_selected,
-            getString(if (preferences.getBoolean(ArtworkColors.PREFERENCE, false)) R.string.artwork_glass else R.string.classic_glass))
+            getString(if (preferences.getBoolean(ArtworkColors.PREFERENCE, true)) R.string.artwork_glass else R.string.classic_glass))
         findViewById<TextView>(R.id.player_status).text = if (selected == null) getString(R.string.setup_player_automatic)
             else getString(R.string.setup_player_selected, WidgetRenderer.appLabel(this, selected))
     }
