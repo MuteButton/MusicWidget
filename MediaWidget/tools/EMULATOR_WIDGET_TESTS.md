@@ -1,8 +1,8 @@
 # Debug media fixture and emulator checks
 
-## Tap-to-scroll titles
+## Automatic title scrolling
 
-`Test-WidgetMarquee.ps1` exercises the Android 12+ full layout on the actual launcher. It captures and hashes title pixels before, during, and after a tap; checks exact restoration, repeat taps, stationary short titles, full accessible text, track-change cancellation, and advancing playback timestamps during scrolling. Screenshots/results are written to `artifacts/marquee-acceptance`. The native animation runs in the launcher, not in the app's tick handler. Run the core and extended suites as regression checks after changing title rendering.
+`Test-WidgetMarquee.ps1` exercises the Android 12+ full layout on the actual launcher. It captures and hashes title pixels during and after automatic scrolling; checks one-pass restoration, no restart on duplicate metadata or resume, stationary short titles, title tap navigation, track-change cancellation, and advancing playback timestamps. Screenshots/results are written to `artifacts/auto-marquee-acceptance`. The native animation runs in the launcher, not in the app's tick handler. Run the core and extended suites as regression checks after changing title rendering.
 
 `app/src/debug` is merged only into debug builds. It creates a real Android `MediaSession`, a media-style foreground notification, and silent looping audio. It does not require a music account or network. The first cover is the full supplied v5 artwork sprite, including its precomposed glass continuation; it is not an original clean album cover. Subsequent covers are generated square test artwork. Production rendering uses an aspect-preserving crop and real adjacent pixels for the fade. No test player or exported control entry point ships in release builds.
 
@@ -17,7 +17,7 @@ $fixture = 'com.example.mediawidget/.debug.DebugMediaActivity'
 & $adb shell dumpsys media_session
 ```
 
-The fixture starts on **Afterglow — The Midnight**, at approximately **1:24 / 4:42**. It intentionally includes silent media playback; hearing no sound is expected. State snapshots include transport callback counters, artwork state, advertised actions, and session status. Widget taps must increment the corresponding counters; this proves the widget used `MediaController.TransportControls`.
+The fixture starts on **Afterglow Ã¢â‚¬â€ The Midnight**, at approximately **1:24 / 4:42**. It intentionally includes silent media playback; hearing no sound is expected. State snapshots include transport callback counters, artwork state, advertised actions, and session status. Widget taps must increment the corresponding counters; this proves the widget used `MediaController.TransportControls`.
 
 ## ADB control
 

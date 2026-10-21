@@ -28,6 +28,9 @@ import android.widget.RemoteViews
 internal object WidgetRenderer {
     private val titleHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val titleTasks = mutableMapOf<Int, Runnable>()
+    private data class TrackIdentity(val token: MediaSession.Token, val mediaId: String?,
+                                     val title: String?, val artist: String?)
+    private val titleTracks = mutableMapOf<Int, TrackIdentity>()
     private var selectedToken: MediaSession.Token? = null
     private var artToken: MediaSession.Token? = null
     private var artGeneration: Int? = null
@@ -93,10 +96,19 @@ internal object WidgetRenderer {
         else if (v5(context, id)) R.layout.widget_media_v5 else R.layout.widget_media_control
 
     fun renderAll(context: Context, controller: MediaController?) {
-        cancelTitleScrolls()
         selectedToken = controller?.sessionToken
         val ids = widgetIds(context)
+        val removed = titleTracks.keys.filter { it !in ids }
+        removed.forEach { id ->
+            titleTasks.remove(id)?.let { titleHandler.removeCallbacks(it) }
+            titleTracks.remove(id)
+        }
         if (ids.isEmpty()) return
+        val interactive = context.getSystemService(android.os.PowerManager::class.java).isInteractive
+        val track = controller?.let {
+            TrackIdentity(it.sessionToken, it.metadata?.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
+                it.metadata?.description?.title?.toString(), it.metadata?.description?.subtitle?.toString())
+        }
         if (controller != null && controller.packageName != context.packageName) {
             val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             if (preferences.getString(LAST_PLAYER, null) != controller.packageName) {
@@ -108,14 +120,20 @@ internal object WidgetRenderer {
         if (controller == null) { roundedArt = null; artGeneration = null; artToken = null }
         val manager = AppWidgetManager.getInstance(context)
         for (id in ids) {
-            val views = createViews(context, id, controller, artwork)
-            manager.updateAppWidget(id, views)
+            val changed = titleTracks[id] != track
+            val preserveTitle = !changed && interactive && v5(context, id) && titleTasks.containsKey(id)
+            if (!preserveTitle) titleTasks.remove(id)?.let { titleHandler.removeCallbacks(it) }
+            if (track == null) titleTracks.remove(id) else titleTracks[id] = track
+            val views = createViews(context, id, controller, artwork, preserveTitle = preserveTitle)
+            if (preserveTitle) manager.partiallyUpdateAppWidget(id, views)
+            else manager.updateAppWidget(id, views)
+            if (changed && interactive && controller != null && v5(context, id)) scrollTitle(context, id, controller)
         }
     }
 
     /** The same RemoteViews used by the launcher and native-resolution debug host. */
     fun createViews(context: Context, id: Int, controller: MediaController?, artwork: Bitmap? = null,
-                    widthOverride: Float? = null): RemoteViews {
+                    widthOverride: Float? = null, preserveTitle: Boolean = false): RemoteViews {
         val manager = AppWidgetManager.getInstance(context)
         val views = RemoteViews(context.packageName, layout(context, id))
         val hasMedia = controller != null
@@ -163,8 +181,10 @@ internal object WidgetRenderer {
                 ?: description?.title?.toString()?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_title)
             val artist = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)?.takeIf { it.isNotBlank() }
                 ?: description?.subtitle?.toString()?.takeIf { it.isNotBlank() } ?: appLabel(context, controller.packageName)
-            if (v5(context, id)) bindTitle(context, views, id, controller, title, false, widthOverride)
-            views.setTextViewText(R.id.track_title, title)
+            if (!preserveTitle) {
+                if (v5(context, id)) bindTitle(context, views, id, controller, title, false, widthOverride)
+                views.setTextViewText(R.id.track_title, title)
+            }
             views.setTextViewText(R.id.track_artist, artist)
             views.setContentDescription(R.id.album_art, context.getString(R.string.open_current_track, title))
             val displayArt = if (v5(context, id)) rawAlbumArt(controller)?.let { V5Artwork.expandedArtwork(it) } else artwork
@@ -207,25 +227,17 @@ internal object WidgetRenderer {
         label.setTextViewText(R.id.track_title, title)
         label.setTextViewTextSize(R.id.track_title, android.util.TypedValue.COMPLEX_UNIT_PX,
             32f * width * context.resources.displayMetrics.density / 1030f)
-        val intent = Intent(context, MediaWidgetProvider::class.java)
-            .setAction(MediaWidgetProvider.ACTION_SCROLL_TITLE)
-            .setData(Uri.Builder().scheme("mediawidget").authority("title").appendPath(id.toString())
-                .appendPath(controller.sessionToken.hashCode().toString()).build())
-            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-            .putExtra(MediaWidgetProvider.EXTRA_SESSION, controller.sessionToken)
-            .putExtra(MediaWidgetProvider.EXTRA_TITLE, title)
-        label.setOnClickPendingIntent(R.id.track_title, PendingIntent.getBroadcast(context, id, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+        label.setOnClickPendingIntent(R.id.track_title,
+            controller.sessionActivity ?: playerIntent(context, controller.packageName))
         views.removeAllViews(R.id.title_container)
         views.addView(R.id.title_container, label)
     }
 
-    fun scrollTitle(context: Context, id: Int, controller: MediaController, expectedTitle: String?) {
+    private fun scrollTitle(context: Context, id: Int, controller: MediaController) {
         if (id !in widgetIds(context) || !v5(context, id)) return
         val title = controller.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() }
             ?: controller.metadata?.description?.title?.toString()?.takeIf { it.isNotBlank() }
             ?: context.getString(R.string.unknown_title)
-        if (title != expectedTitle) return
         val app = context.applicationContext
         val manager = AppWidgetManager.getInstance(app)
         val landscape = app.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE

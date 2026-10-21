@@ -4,12 +4,12 @@ An Android widget that displays currently playing media with album art and playb
 
 ## Features
 
-- 🎵 Displays current track info (title, artist, album art)
-- 🎨 Blue-purple glass design with compact and full layouts
-- ⏯️ Playback controls (play/pause, next, previous)
-- 🖼️ Click album art to open the active media app
-- 🌐 Open App remembers your last player or uses your chosen default
-- ⚡ Optimized with intelligent caching for smooth performance
+- ðŸŽµ Displays current track info (title, artist, album art)
+- ðŸŽ¨ Blue-purple glass design with compact and full layouts
+- â¯ï¸ Playback controls (play/pause, next, previous)
+- ðŸ–¼ï¸ Click album art to open the active media app
+- ðŸŒ Open App remembers your last player or uses your chosen default
+- âš¡ Optimized with intelligent caching for smooth performance
 
 ## Installation
 
@@ -17,12 +17,12 @@ An Android widget that displays currently playing media with album art and playb
 
 1. Download the latest `app-release.apk` from [Releases](https://github.com/MuteButton/MusicWidget/releases)
 2. On your Android device, enable "Install from Unknown Sources":
-   - Go to **Settings** → **Security** (or **Apps**)
+   - Go to **Settings** â†’ **Security** (or **Apps**)
    - Enable **Install unknown apps** and allow your browser/file manager
 3. Open the downloaded APK file and tap **Install**
 4. After installation, grant **Notification Access** permission:
-   - Go to **Settings** → **Apps** → **Music Widget** → **Permissions**
-   - Or: **Settings** → **Apps** → **Special Access** → **Notification Access**
+   - Go to **Settings** â†’ **Apps** â†’ **Music Widget** â†’ **Permissions**
+   - Or: **Settings** â†’ **Apps** â†’ **Special Access** â†’ **Notification Access**
    - Enable access for Music Widget
 
 ### Adding the Widget
@@ -74,9 +74,9 @@ If you encounter any issues or have suggestions, please open an issue on GitHub.
 
 The widget switches between an actionable idle/setup state and a playback state with artwork, supported transport controls, and elapsed/remaining time. Playback progress is a display, not a seek slider. Unknown-duration media hides progress. A narrow widget uses a compact layout; progress is hidden below 120dp height in that layout. The full layout on Android 12+ uses the supplied v5 raster skins with live text and aspect-preserving artwork with a faded continuation. Older Android versions retain the native gradient layout. Neither captures the wallpaper.
 
-Notification access is required. The app reads media sessions locally; it does not upload media information. `Open App` uses the preferred player chosen in setup, or remembers the last external player. Artwork and artist text open the active session's player. In the Android 12+ full layout, tapping a long title waits briefly, scrolls it left once, and restores the original ellipsis. Short titles remain stationary; another tap restarts the scroll. Compact and older layouts retain tap-to-open titles.
+Notification access is required. The app reads media sessions locally; it does not upload media information. `Open App` uses the preferred player chosen in setup, or remembers the last external player. Artwork, artist text, and title taps open the active session's player. In the Android 12+ full layout, a newly displayed track with a long title waits briefly, scrolls left once automatically, and restores the original ellipsis. Short titles remain stationary. Compact and older layouts retain static titles and tap-to-open navigation.
 
-Title motion uses the launcher's native TextView marquee, with no per-frame bitmap or widget updates. Two delayed updates start and restore the title; track/state changes, widget refreshes, and screen-off cancel pending title work. Progress-only ticks leave the animation alone. Marquee behavior is verified on the API 36.1 emulator's launcher; other launchers may handle focus differently. The one-pass timing follows [Android's TextView implementation](https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/master/core/java/android/widget/TextView.java).
+Title motion uses the launcher's native TextView marquee, with no per-frame bitmap or widget updates. Two delayed updates start and restore the title. Track changes and screen-off cancel pending title work. Duplicate metadata, pause/resume, seeks, and progress ticks do not restart the animation; refreshes during the pass preserve its title view. A newly created app process may show one fresh pass for the current track. Marquee behavior is verified on the API 36.1 emulator's launcher; other launchers may handle focus differently. The one-pass timing follows [Android's TextView implementation](https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/master/core/java/android/widget/TextView.java).
 
 **Artwork glass** is the default color mode. **Classic glass** remains available under **Colors** in setup, and explicitly saved selections are preserved. For the Android 12+ full v5 layout, Artwork glass derives a hue from a 48 x 48 cover sample, recolors the glass/rim/control surfaces, and coordinates the artist caption and progress accent. White highlights and glyphs are preserved; luminance compensation prevents green hues from washing out controls. Covers and live track data are unchanged. Missing or neutral artwork falls back to Classic; idle remains Classic. Palette extraction is cached by source bitmap/generation, with at most four recolored surfaces cached, and progress-only ticks do not sample or recolor. `tools/Preview-ArtworkColors.ps1` captures paired emulator examples through the real settings UI.
 
