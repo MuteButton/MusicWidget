@@ -24,6 +24,11 @@
         <Button android:id="@+id/choose_player_button" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:minHeight="56dp" android:layout_marginTop="8dp" android:text="@string/setup_choose_player"
             android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
+        <TextView android:id="@+id/browser_url_status" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:textSize="14sp" android:textColor="#B8C8EE" android:visibility="gone" />
+        <Button android:id="@+id/browser_url_button" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:text="@string/browser_url_title" android:visibility="gone"
+            android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
         <Button android:id="@+id/color_mode_button" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:minHeight="56dp" android:layout_marginTop="16dp" android:text="@string/glass_colors"
             android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
