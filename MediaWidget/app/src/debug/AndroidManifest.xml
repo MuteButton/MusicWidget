@@ -7,7 +7,7 @@
         <activity android:name=".debug.IdleReferenceActivity" android:exported="true" android:excludeFromRecents="true" />
         <activity
             android:name=".debug.DebugMediaActivity"
-            android:taskAffinity="com.example.mediawidget.debug"
+            android:taskAffinity="io.github.mutebutton.musicwidget.debug"
             android:exported="true"
             android:label="Widget media test fixture"
             android:excludeFromRecents="true" />

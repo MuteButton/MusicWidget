@@ -1,6 +1,6 @@
 param([string]$OutputDirectory = 'artifacts/media-widget-redesign/extended')
 . ([scriptblock]::Create((Get-Content -LiteralPath 'MediaWidget/tools/Test-WidgetEmulator.ps1' -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
 Start-Sleep -Seconds 2
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 Show-WidgetPage
@@ -24,9 +24,9 @@ Screenshot '11-end-of-track'
 
 Fixture 'reset'
 Fixture 'pause'
-$mainPid = (Invoke-Adb @('shell','pidof','com.example.mediawidget')).Trim()
+$mainPid = (Invoke-Adb @('shell','pidof','io.github.mutebutton.musicwidget')).Trim()
 if ($mainPid -notmatch '^\d+$') { throw "Unexpected main process id: $mainPid" }
-Invoke-Adb @('shell','run-as','com.example.mediawidget','kill','-9',$mainPid) | Out-Null
+Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','kill','-9',$mainPid) | Out-Null
 Start-Sleep -Seconds 3
 Assert-Eventually { ((Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow') } 'Widget repopulates after main process death while player survives'
 Tap-Node 'btn_next'

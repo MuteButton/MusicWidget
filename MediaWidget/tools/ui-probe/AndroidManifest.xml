@@ -1,5 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.mediawidget.uiprobe">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.github.mutebutton.musicwidget.uiprobe">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
     <application android:label="Widget UI test probe" android:debuggable="true" />
-    <instrumentation android:name=".UiProbe" android:targetPackage="com.example.mediawidget.uiprobe" android:label="Live UI inspection" />
+    <instrumentation android:name=".UiProbe" android:targetPackage="io.github.mutebutton.musicwidget.uiprobe" android:label="Live UI inspection" />
 </manifest>

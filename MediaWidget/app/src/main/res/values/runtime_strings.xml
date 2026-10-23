@@ -13,7 +13,7 @@
     <string name="setup_title">Your music, at a glance.</string>
     <string name="setup_description">A little light for your home screen. Connect your player to see artwork and control playback.</string>
     <string name="setup_ready">You’re connected. Add the widget, then play something in your favorite media app.</string>
-    <string name="setup_permission">Allow notification access to read media sessions and control playback. Your media information stays on this device.</string>
+    <string name="setup_permission">Android notification access can read notifications. Music Widget uses media information to show and control playback and reopen your player. It does not save notification messages or send media data to the developer. Review the Privacy policy below before enabling access.</string>
     <string name="setup_manage_access">Manage notification access</string>
     <string name="setup_add_widget">Add to home screen</string>
     <string name="setup_choose_player">Choose media app</string>

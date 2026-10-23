@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/setup_root"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:background="#101629" android:fillViewport="true">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -31,6 +32,9 @@
             android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
         <Button android:id="@+id/color_mode_button" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:minHeight="56dp" android:layout_marginTop="16dp" android:text="@string/glass_colors"
+            android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
+        <Button android:id="@+id/privacy_button" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:layout_marginTop="8dp" android:text="@string/privacy_title"
             android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
     </LinearLayout>
 </ScrollView>

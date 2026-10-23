@@ -2,7 +2,7 @@ param([string]$OutputDirectory='artifacts/artwork-glass-preview',[switch]$Defini
 $onlyDefine=$DefinitionsOnly
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 function Set-GlassMode([string]$Mode) {
-    Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
     Tap-Node 'color_mode_button'
     $ui=Read-Ui
     $choice=$ui.SelectSingleNode("//node[@text='$Mode']")
@@ -15,7 +15,7 @@ function Set-GlassMode([string]$Mode) {
     Show-WidgetPage
 }
 if($onlyDefine){return}
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
 Start-Sleep -Seconds 3
 foreach($track in 0..2) {
     if($track -gt 0){Fixture 'next'}

@@ -2,7 +2,7 @@ param(
     [string]$Adb = (Join-Path $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }) 'platform-tools/adb.exe'),
     [string]$OutputDirectory = 'artifacts/media-widget-redesign',
     [switch]$DefinitionsOnly,
-    [string]$FixturePackage = 'com.example.mediawidget'
+    [string]$FixturePackage = 'io.github.mutebutton.musicwidget'
 )
 $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
@@ -37,7 +37,7 @@ function Read-Ui {
         # A stalled Android compositor can leave instrumentation waiting forever.
         # Bound the client wait so this is recorded as infrastructure failure.
         $probe = [Diagnostics.Process]::new()
-        $probe.StartInfo = [Diagnostics.ProcessStartInfo]::new($Adb, 'shell am instrument -w com.example.mediawidget.uiprobe/.UiProbe')
+        $probe.StartInfo = [Diagnostics.ProcessStartInfo]::new($Adb, 'shell am instrument -w io.github.mutebutton.musicwidget.uiprobe/.UiProbe')
         $probe.StartInfo.UseShellExecute = $false
         $probe.StartInfo.CreateNoWindow = $true
         $probe.StartInfo.RedirectStandardOutput = $true
@@ -57,7 +57,7 @@ function Read-Ui {
         Start-Sleep -Milliseconds 600
     } while ([DateTime]::UtcNow -lt $deadline)
     if ($capture -notmatch 'UI captured') { throw "UI probe failed: $capture" }
-    $xml = Invoke-Adb @('shell','run-as','com.example.mediawidget.uiprobe','cat','files/window.xml')
+    $xml = Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget.uiprobe','cat','files/window.xml')
     $uiPath=Join-Path $OutputDirectory 'latest-ui.xml'
     for($attempt=0; ; $attempt++) {
         try { [IO.File]::WriteAllText($uiPath,$xml); break }
@@ -83,7 +83,7 @@ function Wait-Activity([string]$Pattern, [int]$TimeoutSeconds=30) {
     throw "Timed out waiting for activity: $Pattern"
 }
 function Find-Node([xml]$Ui, [string]$Id) {
-    return $Ui.SelectSingleNode("//node[@resource-id='com.example.mediawidget:id/$Id']")
+    return $Ui.SelectSingleNode("//node[@resource-id='io.github.mutebutton.musicwidget:id/$Id']")
 }
 function Show-WidgetPage {
     # Pinning/resizing can put the widget on a different launcher page.
@@ -116,7 +116,7 @@ function Tap-Node([string]$Id) {
 function Fixture([string]$Command, [string[]]$Extra = @()) {
     $deadline=[DateTime]::UtcNow.AddSeconds(25)
     do {
-        $result = Invoke-Adb (@('shell','am','broadcast','-n',"$FixturePackage/com.example.mediawidget.debug.DebugMediaReceiver",'--es','command',$Command) + $Extra)
+        $result = Invoke-Adb (@('shell','am','broadcast','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaReceiver",'--es','command',$Command) + $Extra)
         if ($result -match 'Fixture command accepted') {
             Start-Sleep -Milliseconds 350
             return
@@ -135,8 +135,8 @@ function Screenshot([string]$Name) {
     Invoke-Adb @('pull','/sdcard/widget-test.png',(Join-Path $OutputDirectory "$Name.png")) | Out-Null
 }
 if ($DefinitionsOnly) { return }
-Invoke-Adb @('shell','cmd','notification','allow_listener','com.example.mediawidget/.MediaListenerService') | Out-Null
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+Invoke-Adb @('shell','cmd','notification','allow_listener','io.github.mutebutton.musicwidget/.MediaListenerService') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
 Start-Sleep -Seconds 2
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 Show-WidgetPage
@@ -213,18 +213,18 @@ Fixture 'stop'
 Assert-Eventually { ((Find-Node (Read-Ui) 'idle_title').text -eq 'No Media Playing') } 'Destroyed final session returns to idle'
 Screenshot '09-idle'
 
-Invoke-Adb @('shell','cmd','notification','disallow_listener','com.example.mediawidget/.MediaListenerService') | Out-Null
+Invoke-Adb @('shell','cmd','notification','disallow_listener','io.github.mutebutton.musicwidget/.MediaListenerService') | Out-Null
 Start-Sleep -Milliseconds 500
 Assert-Eventually { ((Find-Node (Read-Ui) 'idle_title').text -eq 'Connect your music') } 'Revoked notification access shows recovery action'
 Screenshot '10-permission-needed'
 Tap-Node 'btn_open'
 Assert-Eventually { ($null -ne (Find-Node (Read-Ui) 'grant_button')) } 'Connect action opens setup'
-Invoke-Adb @('shell','cmd','notification','allow_listener','com.example.mediawidget/.MediaListenerService') | Out-Null
+Invoke-Adb @('shell','cmd','notification','allow_listener','io.github.mutebutton.musicwidget/.MediaListenerService') | Out-Null
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 Show-WidgetPage
 Start-Sleep -Milliseconds 500
 Assert-Eventually { ((Find-Node (Read-Ui) 'idle_title').text -eq 'No Media Playing') } 'Permission restoration recovers widget'
 $crashes = Invoke-Adb @('logcat','-d','-b','crash','-t','100')
 $crashes | Set-Content -LiteralPath (Join-Path $OutputDirectory 'crash-log.txt')
-Assert-Eventually { ($crashes -notmatch 'com.example.mediawidget') } 'No Media Widget crashes recorded'
+Assert-Eventually { ($crashes -notmatch 'io.github.mutebutton.musicwidget') } 'No Media Widget crashes recorded'
 Write-Output "Completed $($results.Count) checks. Screenshots: $OutputDirectory"

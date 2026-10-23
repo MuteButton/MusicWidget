@@ -1,4 +1,4 @@
-﻿# Music Widget
+# Music Widget
 
 **Your music. Your artwork. Your home screen.**
 
@@ -65,3 +65,5 @@ Verification is scoped to the documented APK and emulator. Physical Samsung batt
 Bug reports and improvements are welcome. For playback issues, include your Android version, launcher, media app, and steps to reproduce the behavior.
 
 [MIT licensed](MediaWidget/LICENSE).
+
+See the [privacy policy](PRIVACY.md) and [public release guide](MediaWidget/docs/PUBLIC_RELEASE.md) for privacy, signed APKs and Play distribution.

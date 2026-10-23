@@ -77,12 +77,12 @@ See [release acceptance](../tools/RELEASE_ACCEPTANCE.md) for the delivered APK i
 Install the signed release and `tools/test-player/build/outputs/apk/debug/test-player-debug.apk`, enable notification access, and add a full-width widget. A release signing certificate different from an installed debug build requires uninstalling that debug build first (which removes its settings and widgets). Run from the repository root:
 
 ```powershell
-.\MediaWidget\tools\Test-ReleaseApk.ps1 -Apk artifacts/final-release/MusicWidget-1.0-release.apk
-.\MediaWidget\tools\Test-WidgetMarquee.ps1 -FixturePackage com.example.mediawidget.testplayer
-adb shell am force-stop com.example.mediawidget.testplayer
+.\MediaWidget\tools\Test-ReleaseApk.ps1 -Apk artifacts/public-release/MusicWidget-1.1.apk
+.\MediaWidget\tools\Test-WidgetMarquee.ps1 -FixturePackage io.github.mutebutton.musicwidget.testplayer
+adb shell am force-stop io.github.mutebutton.musicwidget.testplayer
 .\MediaWidget\tools\Test-RealChrome.ps1 -ReleaseApk
 .\MediaWidget\tools\Test-BrowserUrl.ps1 -ReleaseApk
-.\MediaWidget\tools\Test-WidgetResponsiveness.ps1 -FixturePackage com.example.mediawidget.testplayer
+.\MediaWidget\tools\Test-WidgetResponsiveness.ps1 -FixturePackage io.github.mutebutton.musicwidget.testplayer
 .\MediaWidget\tools\Test-ReleaseStress.ps1
 .\MediaWidget\tools\Test-RepositoryHygiene.ps1
 ```
@@ -94,3 +94,5 @@ Build outputs, signing files, local IDE settings, and private evidence stay igno
 ## README image provenance
 
 `images/artwork-glass-showcase.png` is an unchanged copy of `artifacts/artwork-glass-preview/artwork-examples.png`. It contains actual emulator widget crops with debug metadata, supplied reference artwork for the first track, and synthetic artwork for the other tracks. It is a feature illustration, not evidence of integration with a particular music service.
+
+For the permanent application identity, bundle-derived APK packaging, CI and store submission preparation, see [public release preparation](PUBLIC_RELEASE.md).

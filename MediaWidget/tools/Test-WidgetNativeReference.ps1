@@ -1,7 +1,7 @@
 param([string]$OutputDirectory='artifacts/media-widget-v5-native-idle')
 . ([scriptblock]::Create((Get-Content -LiteralPath 'MediaWidget/tools/Test-WidgetEmulator.ps1' -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 try {
-    Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.debug.IdleReferenceActivity') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.debug.IdleReferenceActivity') | Out-Null
     $ui=Read-Ui
     $node=Find-Node $ui 'glass_surface'
     if(-not $node){throw 'Native reference host did not render'}

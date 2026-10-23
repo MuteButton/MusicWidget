@@ -1,12 +1,12 @@
 param([string]$OutputDirectory='artifacts/media-widget-v5-native-playing')
 . ([scriptblock]::Create((Get-Content -LiteralPath 'MediaWidget/tools/Test-WidgetEmulator.ps1' -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 try {
-    Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
     Start-Sleep -Seconds 2
     Fixture 'buffering'
     Fixture 'all-actions'
     Fixture 'seek' @('--el','position','84000')
-    Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.debug.IdleReferenceActivity','--ez','playing','true') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.debug.IdleReferenceActivity','--ez','playing','true') | Out-Null
     $ui=Read-Ui
     $node=Find-Node $ui 'glass_surface'
     if(-not $node){throw 'Native reference host did not render'}

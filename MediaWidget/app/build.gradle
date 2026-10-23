@@ -10,15 +10,15 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace 'com.example.mediawidget'
-    compileSdk 34
+    namespace 'io.github.mutebutton.musicwidget'
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.example.mediawidget"
+        applicationId "io.github.mutebutton.musicwidget"
         minSdk 24
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        targetSdk 36
+        versionCode 2
+        versionName "1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -62,6 +62,21 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.media:media:1.7.0'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+}
+
+tasks.register('writeDependencyInventory') {
+    def report = layout.buildDirectory.file('reports/dependency-inventory.json')
+    outputs.file(report)
+    outputs.upToDateWhen { false }
+    doLast {
+        def modules = configurations.releaseRuntimeClasspath.incoming.resolutionResult.allComponents
+            .collect { it.id }
+            .findAll { it instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier }
+            .collect { [name: "${it.group}:${it.module}", version: it.version] }
+            .sort { it.name }
+        report.get().asFile.parentFile.mkdirs()
+        report.get().asFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(modules))
+    }
 }

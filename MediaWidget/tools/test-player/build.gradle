@@ -12,10 +12,10 @@ def fixtureSources = tasks.register('prepareFixtureSources', Sync) {
 
 // Separate, debug-only driver: never a dependency of the shipping widget APK.
 android {
-    namespace 'com.example.mediawidget'
-    compileSdk 34
+    namespace 'io.github.mutebutton.musicwidget'
+    compileSdk 36
     defaultConfig {
-        applicationId 'com.example.mediawidget.testplayer'
+        applicationId 'io.github.mutebutton.musicwidget.testplayer'
         minSdk 24
         targetSdk 34
         versionCode 1

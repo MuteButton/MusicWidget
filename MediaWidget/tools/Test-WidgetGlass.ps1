@@ -1,13 +1,13 @@
 param([string]$OutputDirectory = 'artifacts/media-widget-v5-comparison')
 . ([scriptblock]::Create((Get-Content -LiteralPath 'MediaWidget/tools/Test-WidgetEmulator.ps1' -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
-$packagePaths = Invoke-Adb @('shell','pm','path','com.example.mediawidget')
+$packagePaths = Invoke-Adb @('shell','pm','path','io.github.mutebutton.musicwidget')
 $packageLine = ($packagePaths -split "`n" | Where-Object { $_ -match '^package:/data/app/.*/base\.apk$' } | Select-Object -First 1)
 if (-not $packageLine) { throw "Unexpected installed APK path: $packagePaths" }
 $installedPath = $packageLine.Substring(8).Trim()
 $installedHash = (Invoke-Adb @('shell','sha256sum',$installedPath)).Split(' ')[0]
 $localHash = (Get-FileHash 'MediaWidget/app/build/outputs/apk/debug/app-debug.apk' -Algorithm SHA256).Hash
 Assert-True ($installedHash -eq $localHash) 'Installed APK matches the final local build'
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
 Start-Sleep -Seconds 3
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 Show-WidgetPage
@@ -34,7 +34,7 @@ Assert-Eventually { (Find-Node (Read-Ui) 'idle_title').text -eq 'No Media Playin
 $ui = Read-Ui
 $idleBounds = (Find-Node $ui 'idle_state').bounds
 Screenshot 'idle'
-$launchPreferences=[xml](Invoke-Adb @('shell','run-as','com.example.mediawidget','cat','shared_prefs/media_widget.xml'))
+$launchPreferences=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cat','shared_prefs/media_widget.xml'))
 $destination=@($launchPreferences.map.string | Where-Object {$_.name -eq 'preferred_player'} | ForEach-Object {$_.'#text'}) | Select-Object -First 1
 if(-not $destination){$destination=@($launchPreferences.map.string | Where-Object {$_.name -eq 'last_player'} | ForEach-Object {$_.'#text'}) | Select-Object -First 1}
 Tap-Node 'btn_open'
@@ -43,7 +43,7 @@ $ui = Read-Ui
 $chooser=$null -ne $ui.SelectSingleNode("//node[@text='Choose media app']")
 $playerVisible=$false
 if (-not $chooser) {
-    $preferences=[xml](Invoke-Adb @('shell','run-as','com.example.mediawidget','cat','shared_prefs/media_widget.xml'))
+    $preferences=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cat','shared_prefs/media_widget.xml'))
     $players=@($preferences.map.string | Where-Object {$_.name -in @('preferred_player','last_player')} | ForEach-Object {$_.'#text'})
     $playerVisible=@($ui.SelectNodes('//node') | Where-Object {$_.package -in $players}).Count -gt 0
 }

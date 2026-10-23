@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Media Widget</string>
+    <string name="app_name">Music Widget</string>
     <string name="service_name">Media Listener Service</string>
     <string name="permission_required">Notification Access Required</string>
     <string name="permission_instruction">Please grant notification access to enable media controls.</string>

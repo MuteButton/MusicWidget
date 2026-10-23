@@ -25,17 +25,17 @@ function Compare-Crop([string]$First,[string]$Second,[Drawing.Rectangle]$Bounds,
         return $result
     } finally {$a.Dispose();$b.Dispose()}
 }
-Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
-$prefs=[xml](Invoke-Adb @('shell','run-as','com.example.mediawidget','cat','shared_prefs/media_widget.xml'))
+Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
+$prefs=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cat','shared_prefs/media_widget.xml'))
 $setting=$prefs.SelectSingleNode("/map/boolean[@name='artwork_glass']")
 if($setting){[void]$setting.ParentNode.RemoveChild($setting)}
 $defaultPrefs=Join-Path $OutputDirectory 'default-colors-prefs.xml'
 $prefs.Save($defaultPrefs)
 Invoke-Adb @('push',$defaultPrefs,'/data/local/tmp/default-colors-prefs.xml') | Out-Null
-Invoke-Adb @('shell','run-as','com.example.mediawidget','cp','/data/local/tmp/default-colors-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
-Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cp','/data/local/tmp/default-colors-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
 Assert-Eventually { (Find-Node (Read-Ui) 'color_mode_button').text -eq 'Colors: Artwork glass' } 'Absent color preference defaults to Artwork glass'
-Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
 Start-Sleep -Seconds 3
 Fixture 'pause'
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
@@ -72,8 +72,8 @@ Set-GlassMode 'Classic glass'
 Screenshot 'missing-art-classic'
 Assert-True ((Crop-Hash (Join-Path $OutputDirectory 'missing-art-adaptive.png') $glass) -eq (Crop-Hash (Join-Path $OutputDirectory 'missing-art-classic.png') $glass)) 'Missing artwork falls back to Classic glass'
 Set-GlassMode 'Artwork glass'
-Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
-Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
 Assert-True ((Find-Node (Read-Ui) 'color_mode_button').text -eq 'Colors: Artwork glass') 'Color preference survives app process restart'
 Set-GlassMode 'Classic glass'
 Write-Output "Completed $($results.Count) artwork color checks."

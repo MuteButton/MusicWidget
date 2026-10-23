@@ -26,6 +26,6 @@ else if(tag===2){p+=4;const cls=id();p+=4;classes.set(cls,id());}
 else if(tag===0xc||tag===0x1c)heap(end);
 p=end;}
 const all=[...counts].map(([key,count])=>({className:strings.get(classes.get(key))||key,count}));
-const selected=all.filter(x=>x.className.includes('com.example.mediawidget')||x.className.includes('com/example/mediawidget')||/android[./](graphics[./]Bitmap$|media[./]session[./]MediaController$|app[./]PendingIntent$)/.test(x.className));
+const selected=all.filter(x=>x.className.includes('io.github.mutebutton.musicwidget')||x.className.includes('io/github/mutebutton/musicwidget')||/android[./](graphics[./]Bitmap$|media[./]session[./]MediaController$|app[./]PendingIntent$)/.test(x.className));
 selected.sort((a,b)=>a.className.localeCompare(b.className));
 console.log(JSON.stringify({file:process.argv[2],bytes:b.length,idSize,instanceCount:[...counts.values()].reduce((a,b)=>a+b,0),selected},null,2));

@@ -17,8 +17,8 @@ try {
     if($server.HasExited){throw 'Local server failed to start; check port 8765 and server-error.log'}
     Invoke-Adb @('reverse','tcp:8765','tcp:8765') | Out-Null
     # Release the runner's competing debug session before testing Chrome itself.
-    Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
-    Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+    Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
     Invoke-Adb @('shell','am','force-stop','com.android.chrome') | Out-Null
     Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.VIEW','-d','http://127.0.0.1:8765/player','-p','com.android.chrome') | Out-Null
     Assert-Eventually { $null -ne (Read-Ui).SelectSingleNode("//node[@text='Play test audio']") } 'Local Chrome media page loads (Chrome onboarding must already be complete)'
@@ -48,20 +48,20 @@ try {
     Assert-Eventually { $null -ne (Read-Ui).SelectSingleNode("//node[@text='Unrelated browser tab']") } 'Other tab selected before widget process restart'
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
     Show-WidgetPage
-    $mainPid=(Invoke-Adb @('shell','pidof','com.example.mediawidget')).Trim()
+    $mainPid=(Invoke-Adb @('shell','pidof','io.github.mutebutton.musicwidget')).Trim()
     if($mainPid -notmatch '^\d+$'){throw "Unexpected widget process id: $mainPid"}
     if($ReleaseApk) {
         # Shipping builds correctly disallow run-as; exercise an actual stop/relaunch.
-        Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
-        Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+        Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
+        Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
         Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
         Show-WidgetPage
     } else {
-        Invoke-Adb @('shell','run-as','com.example.mediawidget','kill','-9',$mainPid) | Out-Null
+        Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','kill','-9',$mainPid) | Out-Null
     }
     Assert-Eventually {
         # pidof exits 1 during the expected interval before Android restarts it.
-        $newPid=(& $Adb shell pidof com.example.mediawidget) -join ''
+        $newPid=(& $Adb shell pidof io.github.mutebutton.musicwidget) -join ''
         $LASTEXITCODE -eq 0 -and $newPid -match '^\d+$' -and $newPid -ne $mainPid
     } 'Widget listener process restarts while Chrome keeps playing'
     Start-Sleep -Seconds 2

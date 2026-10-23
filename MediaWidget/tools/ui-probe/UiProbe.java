@@ -1,4 +1,4 @@
-package com.example.mediawidget.uiprobe;
+package io.github.mutebutton.musicwidget.uiprobe;
 
 import android.app.Instrumentation;
 import android.accessibilityservice.AccessibilityServiceInfo;

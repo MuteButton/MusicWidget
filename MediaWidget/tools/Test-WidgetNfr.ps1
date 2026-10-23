@@ -4,9 +4,9 @@ $OutputDirectory=(Resolve-Path $OutputDirectory).Path
 $memory=[Collections.Generic.List[object]]::new()
 $cpu=[Collections.Generic.List[object]]::new()
 function Process-Sample {
-    $appPid=(Invoke-Adb @('shell','pidof','com.example.mediawidget')).Trim()
+    $appPid=(Invoke-Adb @('shell','pidof','io.github.mutebutton.musicwidget')).Trim()
     if($appPid -notmatch '^\d+$'){throw 'Widget process missing'}
-    $stat=Invoke-Adb @('shell','run-as','com.example.mediawidget','cat',"/proc/$appPid/stat")
+    $stat=Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cat',"/proc/$appPid/stat")
     $fields=($stat.Substring($stat.LastIndexOf(')')+2)).Split(' ')
     $up=[double]((Invoke-Adb @('shell','cat','/proc/uptime')).Split(' ')[0])
     [pscustomobject]@{pid=$appPid;ticks=([long]$fields[11]+[long]$fields[12]);uptime=$up;threads=[int]$fields[17]}
@@ -25,24 +25,24 @@ function Cpu-Sample([string]$Name,[double]$Limit) {
 function Heap-Snapshot([string]$Name) {
     $sample=Process-Sample
     $remote="/data/local/tmp/widget-nfr-$Name.hprof"
-    Invoke-Adb @('shell','am','dumpheap','-g','com.example.mediawidget',$remote) | Out-Null
+    Invoke-Adb @('shell','am','dumpheap','-g','io.github.mutebutton.musicwidget',$remote) | Out-Null
     Invoke-Adb @('pull',$remote,(Join-Path $OutputDirectory "$Name.hprof")) | Out-Null
     Invoke-Adb @('shell','rm',$remote) | Out-Null
-    $info=Invoke-Adb @('shell','dumpsys','meminfo','com.example.mediawidget')
+    $info=Invoke-Adb @('shell','dumpsys','meminfo','io.github.mutebutton.musicwidget')
     $info | Set-Content (Join-Path $OutputDirectory "$Name-meminfo.txt")
     $native=[regex]::Match($info,'(?m)^\s*Native Heap\s+((?:\d+\s+){7}\d+)')
     $managed=[regex]::Match($info,'(?m)^\s*Dalvik Heap\s+((?:\d+\s+){7}\d+)')
     if(-not $native.Success -or -not $managed.Success){throw 'Unrecognized meminfo heap format'}
-    $fds=@((Invoke-Adb @('shell','run-as','com.example.mediawidget','ls',"/proc/$($sample.pid)/fd")) -split '\s+' | Where-Object {$_ -match '^\d+$'}).Count
+    $fds=@((Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','ls',"/proc/$($sample.pid)/fd")) -split '\s+' | Where-Object {$_ -match '^\d+$'}).Count
     $entry=[pscustomobject]@{name=$Name;pid=$sample.pid;nativeAllocatedKB=[int](($native.Groups[1].Value -split '\s+')[6]);javaAllocatedKB=[int](($managed.Groups[1].Value -split '\s+')[6]);pssKB=[int]([regex]::Match($info,'TOTAL PSS:\s+(\d+)').Groups[1].Value);threads=$sample.threads;fileDescriptors=$fds}
     $memory.Add($entry)
     $memory | ConvertTo-Json | Set-Content (Join-Path $OutputDirectory 'memory-samples.json')
     Write-Output "SNAPSHOT: $Name Java=$($entry.javaAllocatedKB)KB Native=$($entry.nativeAllocatedKB)KB PSS=$($entry.pssKB)KB threads=$($entry.threads) FD=$fds"
 }
-Invoke-Adb @('shell','run-as','com.example.mediawidget','cp','shared_prefs/media_widget.xml','files/nfr-original-prefs.xml') | Out-Null
+Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cp','shared_prefs/media_widget.xml','files/nfr-original-prefs.xml') | Out-Null
 try {
     $script:hz=[int](Invoke-Adb @('shell','getconf','CLK_TCK'))
-    Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
     Set-GlassMode 'Artwork glass'
     # Warm all three artwork palettes and play/pause surfaces before measuring retention.
     foreach($i in 1..6){Fixture 'next';Fixture 'pause';Fixture 'play'}
@@ -78,8 +78,8 @@ try {
 } finally {
     Invoke-Adb @('shell','input','keyevent','KEYCODE_WAKEUP') | Out-Null
     Invoke-Adb @('shell','wm','dismiss-keyguard') | Out-Null
-    Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
-    Invoke-Adb @('shell','run-as','com.example.mediawidget','cp','files/nfr-original-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
-    Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+    Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
+    Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cp','files/nfr-original-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 }
