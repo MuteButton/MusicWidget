@@ -1,5 +1,7 @@
 # Debug media fixture and emulator checks
 
+Run all deterministic emulator groups with Test-AllEmulator.ps1. See [coverage, setup, and explicit limits](REGRESSION_COVERAGE.md). Each run saves screenshots, logs, device/APK identity, and a combined summary; a failed group fails the command.
+
 ## Automatic title scrolling
 
 `Test-WidgetMarquee.ps1` exercises the Android 12+ full layout on the actual launcher. It captures and hashes title pixels during and after automatic scrolling; checks one-pass restoration, no restart on duplicate metadata or resume, stationary short titles, title tap navigation, track-change cancellation, and advancing playback timestamps. Screenshots/results are written to `artifacts/auto-marquee-acceptance`. The native animation runs in the launcher, not in the app's tick handler. Run the core and extended suites as regression checks after changing title rendering.
@@ -17,7 +19,7 @@ $fixture = 'com.example.mediawidget/.debug.DebugMediaActivity'
 & $adb shell dumpsys media_session
 ```
 
-The fixture starts on **Afterglow Ã¢â‚¬â€ The Midnight**, at approximately **1:24 / 4:42**. It intentionally includes silent media playback; hearing no sound is expected. State snapshots include transport callback counters, artwork state, advertised actions, and session status. Widget taps must increment the corresponding counters; this proves the widget used `MediaController.TransportControls`.
+The fixture starts on **Afterglow - The Midnight**, at approximately **1:24 / 4:42**. It intentionally includes silent media playback; hearing no sound is expected. State snapshots include transport callback counters, artwork state, advertised actions, and session status. Widget taps must increment the corresponding counters; this proves the widget used `MediaController.TransportControls`.
 
 ## ADB control
 

@@ -1,6 +1,8 @@
 package com.example.mediawidget
 
 import android.content.BroadcastReceiver
+import android.app.Notification
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -13,6 +15,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
 import android.service.notification.NotificationListenerService
+import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.content.ContextCompat
 
@@ -23,6 +26,8 @@ class MediaListenerService : NotificationListenerService(),
     private lateinit var sessions: MediaSessionManager
     private var active: MediaController? = null
     private var connected = false
+    private data class MediaDestination(val packageName: String, val token: MediaSession.Token, val intent: PendingIntent)
+    private val destinations = mutableMapOf<String, MediaDestination>()
     private val callbacks = mutableMapOf<MediaSession.Token, Pair<MediaController, MediaController.Callback>>()
     private val tick = object : Runnable {
         override fun run() {
@@ -54,6 +59,7 @@ class MediaListenerService : NotificationListenerService(),
         connected = true
         instance = this
         try {
+            activeNotifications?.forEach { rememberDestination(it) }
             sessions.addOnActiveSessionsChangedListener(this,
                 ComponentName(this, MediaListenerService::class.java), handler)
             refresh()
@@ -71,6 +77,30 @@ class MediaListenerService : NotificationListenerService(),
     }
 
     override fun onActiveSessionsChanged(controllers: MutableList<MediaController>?) = refresh(controllers)
+
+    @Suppress("DEPRECATION")
+    private fun rememberDestination(notification: StatusBarNotification): Boolean {
+        val token = notification.notification.extras.getParcelable<MediaSession.Token>(Notification.EXTRA_MEDIA_SESSION)
+        val intent = notification.notification.contentIntent
+        val destination = if (token != null && intent != null)
+            MediaDestination(notification.packageName, token, intent) else null
+        val previous = destinations[notification.key]
+        if (destination == null) destinations.remove(notification.key)
+        else destinations[notification.key] = destination
+        return previous != destination
+    }
+
+    override fun onNotificationPosted(notification: StatusBarNotification) {
+        // Position-only notification updates must not restart rendering/marquee.
+        if (rememberDestination(notification)) refresh()
+    }
+
+    override fun onNotificationRemoved(notification: StatusBarNotification) {
+        if (destinations.remove(notification.key) != null) refresh()
+    }
+
+    internal fun mediaDestination(controller: MediaController): PendingIntent? = destinations.values
+        .firstOrNull { it.packageName == controller.packageName && it.token == controller.sessionToken }?.intent
 
     internal fun refresh(controllers: List<MediaController>? = null, destroyed: MediaSession.Token? = null) {
         if (!connected) return
@@ -117,6 +147,7 @@ class MediaListenerService : NotificationListenerService(),
         handler.removeCallbacksAndMessages(null)
         callbacks.values.forEach { (controller, callback) -> controller.unregisterCallback(callback) }
         callbacks.clear()
+        destinations.clear()
         active = null
         try { sessions.removeOnActiveSessionsChangedListener(this) } catch (_: SecurityException) { }
     }

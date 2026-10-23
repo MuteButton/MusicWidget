@@ -19,9 +19,9 @@ Assert-True (($buttonBounds[0] -ge $rowBounds[0]) -and ($buttonBounds[1] -ge $ro
 $before = (State).pauseCount
 Invoke-Adb @('shell','input','tap',[string][int](($buttonBounds[0]+$buttonBounds[2])/2),[string]($buttonBounds[3]-2)) | Out-Null
 Start-Sleep -Milliseconds 500
-Assert-True ((State).pauseCount -eq ($before+1)) 'Bottom edge of Pause reaches the real MediaSession'
+Assert-Eventually { (State).pauseCount -eq ($before+1) } 'Bottom edge of Pause reaches the real MediaSession'
 Tap-Node 'btn_play'
-Assert-True ((State).playing) 'Center of Play resumes playback'
+Assert-Eventually { (State).playing } 'Center of Play resumes playback'
 Fixture 'buffering'
 Fixture 'all-actions'
 Fixture 'seek' @('--el','position','84000')
@@ -30,10 +30,15 @@ $playbackBounds = (Find-Node $ui 'media_state').bounds
 Screenshot 'emulator'
 Fixture 'stop'
 $ui = Read-Ui
-Assert-True ((Find-Node $ui 'idle_title').text -eq 'No Media Playing') 'Final glass surface returns to idle'
+Assert-Eventually { (Find-Node (Read-Ui) 'idle_title').text -eq 'No Media Playing' } 'Final glass surface returns to idle'
+$ui = Read-Ui
 $idleBounds = (Find-Node $ui 'idle_state').bounds
 Screenshot 'idle'
+$launchPreferences=[xml](Invoke-Adb @('shell','run-as','com.example.mediawidget','cat','shared_prefs/media_widget.xml'))
+$destination=@($launchPreferences.map.string | Where-Object {$_.name -eq 'preferred_player'} | ForEach-Object {$_.'#text'}) | Select-Object -First 1
+if(-not $destination){$destination=@($launchPreferences.map.string | Where-Object {$_.name -eq 'last_player'} | ForEach-Object {$_.'#text'}) | Select-Object -First 1}
 Tap-Node 'btn_open'
+if($destination){Wait-Activity ('ResumedActivity.*'+[regex]::Escape($destination)) | Out-Null}
 $ui = Read-Ui
 $chooser=$null -ne $ui.SelectSingleNode("//node[@text='Choose media app']")
 $playerVisible=$false

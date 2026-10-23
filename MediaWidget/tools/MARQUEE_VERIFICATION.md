@@ -1,4 +1,6 @@
-# Title marquee verification — 2026-10-20
+> Historical tap-to-scroll report. Superseded by automatic scrolling and tap-to-open in commit b278a7f. See [current regression coverage](REGRESSION_COVERAGE.md) and Test-WidgetMarquee.ps1.
+
+# Title marquee verification - 2026-10-20
 
 Implemented for the Android 12+ full v5 layout. Tap the title to wait 600 ms, scroll left once, and return to the original ellipsized text. Short titles stay still. Repeated taps restart; track/state changes and screen-off cancel pending work. Artwork and artist taps still open the player. Compact and legacy layouts keep tap-to-open behavior.
 

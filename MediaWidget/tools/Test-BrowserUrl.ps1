@@ -1,4 +1,5 @@
-. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory 'C:/Users/David/Projects/Android/artifacts/browser-url-test'
+param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/browser-url-test')
+. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 function Tap-XmlNode($node) {
     if (-not $node) { throw 'Missing UI node' }
     $b=[regex]::Matches($node.bounds,'\d+') | ForEach-Object {[int]$_.Value}
@@ -49,12 +50,20 @@ try {
     Start-Sleep -Seconds 3
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
     Show-WidgetPage
+    Tap-Node 'track_title'
+    $titleTarget=Wait-Activity 'ResumedActivity.*DebugMediaActivity'
+    Assert-True ($titleTarget -match 'ResumedActivity.*DebugMediaActivity') 'Active title opens session player despite saved browser URL'
+    Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
+    Show-WidgetPage
     Tap-Node 'album_art'
-    $active=Invoke-Adb @('shell','dumpsys','activity','activities')
+    $active=Wait-Activity 'ResumedActivity.*DebugMediaActivity'
     Assert-True ($active -match 'ResumedActivity.*DebugMediaActivity') 'Active artwork opens session player despite saved browser URL'
     Fixture 'stop'
-    Invoke-Adb @('shell','am','start','-W','-a','com.example.mediawidget.OPEN_PLAYER','-n','com.example.mediawidget/.MainActivity') | Out-Null
-    $activities=Invoke-Adb @('shell','dumpsys','activity','activities')
+    Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
+    Show-WidgetPage
+    Assert-True ($null -ne (Find-Node (Read-Ui) 'btn_open')) 'Stopped final session exposes idle Open App'
+    Tap-Node 'btn_open'
+    $activities=Wait-Activity 'dat=https://music.youtube.com'
     $activities | Set-Content (Join-Path $OutputDirectory 'browser-launch.txt')
     Assert-True ($activities -match 'dat=https://music.youtube.com' -and $activities -match 'pkg=com.android.chrome') 'Idle Open App dispatches URL explicitly to Chrome'
     Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
@@ -62,6 +71,11 @@ try {
     Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
     Set-Url ''
     Assert-True ((Find-Node (Read-Ui) 'browser_url_status').text -like 'No URL set*') 'Blank input clears browser URL'
+    Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
+    Show-WidgetPage
+    Tap-Node 'btn_open'
+    $normalLaunch=Wait-Activity 'ResumedActivity.*com.android.chrome'
+    Assert-True ($normalLaunch -match 'ResumedActivity.*com.android.chrome') 'Idle tap without URL opens the chosen browser normally'
 } finally {
     Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
     Invoke-Adb @('shell','run-as','com.example.mediawidget','cp','files/browser-test-prefs.xml','shared_prefs/media_widget.xml') | Out-Null

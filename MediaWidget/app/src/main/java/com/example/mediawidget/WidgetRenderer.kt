@@ -198,7 +198,7 @@ internal object WidgetRenderer {
             button(context, views, R.id.btn_play, canToggle(controller.playbackState), MediaWidgetProvider.ACTION_PLAY_PAUSE, controller)
             button(context, views, R.id.btn_prev, actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L, MediaWidgetProvider.ACTION_PREV, controller)
             button(context, views, R.id.btn_next, actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L, MediaWidgetProvider.ACTION_NEXT, controller)
-            val openIntent = controller.sessionActivity ?: playerIntent(context, controller.packageName)
+            val openIntent = mediaIntent(context, controller)
             views.setOnClickPendingIntent(R.id.album_art, openIntent)
             views.setOnClickPendingIntent(R.id.text_info, openIntent)
             progress(context, id, views, controller)
@@ -228,10 +228,14 @@ internal object WidgetRenderer {
         label.setTextViewTextSize(R.id.track_title, android.util.TypedValue.COMPLEX_UNIT_PX,
             32f * width * context.resources.displayMetrics.density / 1030f)
         label.setOnClickPendingIntent(R.id.track_title,
-            controller.sessionActivity ?: playerIntent(context, controller.packageName))
+            mediaIntent(context, controller))
         views.removeAllViews(R.id.title_container)
         views.addView(R.id.title_container, label)
     }
+
+    private fun mediaIntent(context: Context, controller: MediaController): PendingIntent? =
+        controller.sessionActivity ?: MediaListenerService.instance?.mediaDestination(controller)
+        ?: playerIntent(context, controller.packageName)
 
     private fun scrollTitle(context: Context, id: Int, controller: MediaController) {
         if (id !in widgetIds(context) || !v5(context, id)) return

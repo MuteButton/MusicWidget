@@ -7,19 +7,19 @@ Show-WidgetPage
 Start-Sleep -Seconds 1
 Fixture 'buffering'
 $ui = Read-Ui
-Assert-True (((Find-Node $ui 'btn_play').'content-desc' -eq 'Pause') -and ((Find-Node $ui 'btn_play').enabled -eq 'true')) 'Buffering offers supported Pause action'
+Assert-Eventually { $ui=Read-Ui; (((Find-Node $ui 'btn_play').'content-desc' -eq 'Pause') -and ((Find-Node $ui 'btn_play').enabled -eq 'true')) } 'Buffering offers supported Pause action'
 Tap-Node 'btn_play'
-Assert-True (((State).pauseCount -eq 1) -and (-not (State).playing)) 'Buffering can be cancelled via widget Pause'
+Assert-Eventually { (((State).pauseCount -eq 1) -and (-not (State).playing)) } 'Buffering can be cancelled via widget Pause'
 Fixture 'connecting'
 $ui = Read-Ui
-Assert-True (((Find-Node $ui 'btn_play').'content-desc' -eq 'Pause') -and ((Find-Node $ui 'btn_play').enabled -eq 'true')) 'Connecting offers supported Pause action'
+Assert-Eventually { $ui=Read-Ui; (((Find-Node $ui 'btn_play').'content-desc' -eq 'Pause') -and ((Find-Node $ui 'btn_play').enabled -eq 'true')) } 'Connecting offers supported Pause action'
 Tap-Node 'btn_play'
-Assert-True (((State).pauseCount -eq 2) -and (-not (State).playing)) 'Connecting can be cancelled via widget Pause'
+Assert-Eventually { (((State).pauseCount -eq 2) -and (-not (State).playing)) } 'Connecting can be cancelled via widget Pause'
 Fixture 'near-end' @('--el','remaining','1500')
 Start-Sleep -Seconds 3
 $ui = Read-Ui
-Assert-True ((Find-Node $ui 'elapsed_time').text -eq '4:42') 'Elapsed time clamps at track duration'
-Assert-True ((Find-Node $ui 'remaining_time').text -eq '-0:00') 'Remaining countdown stops at zero'
+Assert-Eventually { $ui=Read-Ui; ((Find-Node $ui 'elapsed_time').text -eq '4:42') } 'Elapsed time clamps at track duration'
+Assert-Eventually { $ui=Read-Ui; ((Find-Node $ui 'remaining_time').text -eq '-0:00') } 'Remaining countdown stops at zero'
 Screenshot '11-end-of-track'
 
 Fixture 'reset'
@@ -28,9 +28,9 @@ $mainPid = (Invoke-Adb @('shell','pidof','com.example.mediawidget')).Trim()
 if ($mainPid -notmatch '^\d+$') { throw "Unexpected main process id: $mainPid" }
 Invoke-Adb @('shell','run-as','com.example.mediawidget','kill','-9',$mainPid) | Out-Null
 Start-Sleep -Seconds 3
-Assert-True ((Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow') 'Widget repopulates after main process death while player survives'
+Assert-Eventually { ((Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow') } 'Widget repopulates after main process death while player survives'
 Tap-Node 'btn_next'
-Assert-True (((State).nextCount -eq 1) -and ((Find-Node (Read-Ui) 'track_title').text -eq 'Emerald Skies')) 'Controls work after widget process restart'
+Assert-Eventually { (((State).nextCount -eq 1) -and ((Find-Node (Read-Ui) 'track_title').text -eq 'Emerald Skies')) } 'Controls work after widget process restart'
 
 Fixture 'reset'
 try {
@@ -44,7 +44,7 @@ Show-WidgetPage
 }
 Start-Sleep -Seconds 1
 $ui = Read-Ui
-Assert-True (((Find-Node $ui 'track_title').text -eq 'Afterglow') -and ((Find-Node $ui 'btn_play').'content-desc' -eq 'Pause')) 'Playback widget recovers after screen off/on'
+Assert-Eventually { $ui=Read-Ui; (((Find-Node $ui 'track_title').text -eq 'Afterglow') -and ((Find-Node $ui 'btn_play').'content-desc' -eq 'Pause')) } 'Playback widget recovers after screen off/on'
 Fixture 'pause'
 try {
     Invoke-Adb @('shell','settings','put','system','font_scale','1.3') | Out-Null
