@@ -96,3 +96,7 @@ Build outputs, signing files, local IDE settings, and private evidence stay igno
 `images/artwork-glass-showcase.png` is an unchanged copy of `artifacts/artwork-glass-preview/artwork-examples.png`. It contains actual emulator widget crops with debug metadata, supplied reference artwork for the first track, and synthetic artwork for the other tracks. It is a feature illustration, not evidence of integration with a particular music service.
 
 For the permanent application identity, bundle-derived APK packaging, CI and store submission preparation, see [public release preparation](PUBLIC_RELEASE.md).
+
+### Fast background lifecycle checks
+
+Run `tools/Test-ReleaseBackground.ps1` from the repository root using its full `MediaWidget/tools/` path on the prepared emulator. The suite uses the signed APK and forces idle transitions, injects one process crash, tests explicit reopen after force-stop, and restores emulator settings. See [measured results and platform limits](../tools/BACKGROUND_ACCEPTANCE.md).

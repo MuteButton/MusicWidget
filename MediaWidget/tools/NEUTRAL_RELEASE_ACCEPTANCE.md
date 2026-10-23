@@ -42,6 +42,10 @@ Callback latency including ADB/polling overhead was **153.7 ms median**, **274.9
 
 Replacement tests used the same version code and new certificate; they do not claim an update across the deliberately incompatible old certificate or every future settings-schema migration. Android's local backup transport restored the previous settings after they were changed. Normal reboot independently retained the widget; app-only restore required re-adding the launcher widget. The prior backup-manager configuration was restored (disabled), and the app was left in Artwork glass mode.
 
+## Additional background validation
+
+The [forced-state background suite](BACKGROUND_ACCEPTANCE.md) subsequently passed 55 assertions in 151.4 seconds against this same APK. It covers repeated Doze/wake, injected process-loss recovery, explicit reopen after force-stop and bounded idle resource checks. Android kept the bound widget active during the standby request, so restrictive standby is explicitly not claimed.
+
 ## Unchanged source checks
 
 The [initial public-identity report](PUBLIC_RELEASE_ACCEPTANCE.md) records 11 JVM tests, release lint with 0 errors / 71 triaged warnings, the resolved-dependency vulnerability scan, and the build/API 24/31/36 CI smoke tests. These checks apply to the unchanged application source; CI does not receive the production signing key. Full launcher/media behavior is tested locally on API 36.1, not across every CI API.
