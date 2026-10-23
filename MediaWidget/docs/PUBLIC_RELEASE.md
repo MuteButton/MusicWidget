@@ -25,10 +25,18 @@ Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/pu
 
 Before an update, verify the certificate matches the previous release, install with `adb install -r`, and verify settings, permissions and widget placement survive. A new signing certificate requires a planned migration; do not casually regenerate the release key.
 
+## Signing recovery
+
+The public release uses the neutral certificate subject `CN=MuteButton, OU=Music Widget, O=MuteButton`. It intentionally differs from the earlier test signing certificate, so phones with that earlier test build must uninstall it once before installing this release. Future updates must retain the public signing key.
+
+The owner-authorized setup saved a matching encrypted PKCS12 keystore and its recovery password in the Windows Documents folder, under `Music Widget signing backup`. That folder restricts access to the current Windows account and SYSTEM. The recovery password file is plaintext: move a copy of the complete folder to an encrypted off-device vault and verify recovery before publication. Same-PC storage is not an independent backup. Never commit these files. `tools/Initialize-PublicSigning.ps1` is a one-time initializer and refuses to overwrite an existing identity.
+
+The neutral release artifacts and their fresh emulator evidence are under ignored `artifacts/public-release-neutral/`; earlier `artifacts/public-release/` evidence belongs to the previous signing identity.
+
 ## Privacy, security and artwork
 
 - [Privacy policy](../../PRIVACY.md) is also available offline in setup. The notification-access explanation is displayed before the permission action.
-- The manifest has no Internet permission. Notification destinations and media state are used locally, and only the settings file is allowed in Android backup/device transfer. Backup can include saved browser URLs; the policy explicitly discloses this.
+- The manifest has no Internet permission. Notification destinations and media state are used locally, and only the settings file is allowed in Android backup/device transfer. Backup can include saved browser URLs; the policy explicitly discloses this. An app-only settings restore does not restore launcher host data, so the widget may need to be added again.
 - The widget action receiver is not exported. The notification listener is protected by Android's notification-listener binding permission. Control PendingIntents are explicit and immutable. The exported setup activity does not accept arbitrary destination URLs from callers.
 - The owner confirmed on October 23, 2026 that the supplied v5 design and README/demo artwork may be redistributed. The code's MIT license alone does not establish image rights. Keep that confirmation with release records.
 - The resolved production dependency scan uses OSV and sends Maven coordinates only. No advisory results are a database snapshot, not a guarantee of no vulnerabilities.
@@ -36,6 +44,8 @@ Before an update, verify the certificate matches the previous release, install w
 ## Automated verification
 
 GitHub Actions builds without production signing secrets, runs repository hygiene, JVM tests, lint and a dependency scan. Android instrumentation jobs target API 24, 31 and 36 and check package/API configuration, backup allowlists, privacy access and setup insets. These small CI checks do not replace the full widget integration suite on a prepared launcher.
+
+`Test-ReleaseUpgrade.ps1` additionally tests split/universal replacement installs, permission/settings retention, ordinary reboot recovery, and actual local-transport backup/restore on a dedicated emulator. It restores the previous backup-manager configuration; do not run it on a personal phone.
 
 The release integration scripts test the actual signed APK with the separate acceptance player, Chrome, launcher UI, callbacks, progress, marquee and stress. Keep reports scoped to the tested artifact hash. Do not describe a configured CI job as passed before its run completes.
 

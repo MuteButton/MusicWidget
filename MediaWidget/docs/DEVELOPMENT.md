@@ -68,7 +68,7 @@ The suite taps actual widget controls, checks MediaSession callbacks, captures r
 
 ## Signed release verification
 
-See [release acceptance](../tools/RELEASE_ACCEPTANCE.md) for the delivered APK identity and measured results. The standalone `:test-player` module publishes media sessions in a separate application; it is not bundled into the shipping widget. Build from `MediaWidget` with local signing configuration:
+See [release acceptance](../tools/NEUTRAL_RELEASE_ACCEPTANCE.md) for the delivered APK identity and measured results. The standalone `:test-player` module publishes media sessions in a separate application; it is not bundled into the shipping widget. Build from `MediaWidget` with local signing configuration:
 
 ```powershell
 .\gradlew.bat :app:assembleRelease :app:testDebugUnitTest :app:lintRelease :test-player:assembleDebug --max-workers=1

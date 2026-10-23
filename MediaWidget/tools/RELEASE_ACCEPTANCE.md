@@ -1,5 +1,7 @@
 # Signed release acceptance
 
+This is the historical prototype report. See [neutral signing release acceptance](NEUTRAL_RELEASE_ACCEPTANCE.md) for Music Widget 1.1.
+
 Release candidate: Music Widget 1.0, tested 2026-10-23 on the API 36.1 S25 Edge approximation emulator. This is an Android emulator, not a physical Samsung device or One UI.
 
 ## Artifact identity
