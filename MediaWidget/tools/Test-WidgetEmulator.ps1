@@ -1,7 +1,8 @@
 param(
-    [string]$Adb = 'C:/Users/David/AppData/Local/Android/Sdk/platform-tools/adb.exe',
-    [string]$OutputDirectory = 'C:/Users/David/Projects/Android/artifacts/media-widget-redesign',
-    [switch]$DefinitionsOnly
+    [string]$Adb = (Join-Path $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }) 'platform-tools/adb.exe'),
+    [string]$OutputDirectory = 'artifacts/media-widget-redesign',
+    [switch]$DefinitionsOnly,
+    [string]$FixturePackage = 'com.example.mediawidget'
 )
 $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
@@ -115,7 +116,7 @@ function Tap-Node([string]$Id) {
 function Fixture([string]$Command, [string[]]$Extra = @()) {
     $deadline=[DateTime]::UtcNow.AddSeconds(25)
     do {
-        $result = Invoke-Adb (@('shell','am','broadcast','-n','com.example.mediawidget/.debug.DebugMediaReceiver','--es','command',$Command) + $Extra)
+        $result = Invoke-Adb (@('shell','am','broadcast','-n',"$FixturePackage/com.example.mediawidget.debug.DebugMediaReceiver",'--es','command',$Command) + $Extra)
         if ($result -match 'Fixture command accepted') {
             Start-Sleep -Milliseconds 350
             return
@@ -127,7 +128,7 @@ function Fixture([string]$Command, [string[]]$Extra = @()) {
     throw "Fixture failed to become ready for $Command : $result"
 }
 function State {
-    return (Invoke-Adb @('shell','run-as','com.example.mediawidget','cat','files/debug-media-state.json') | ConvertFrom-Json)
+    return (Invoke-Adb @('shell','run-as',$FixturePackage,'cat','files/debug-media-state.json') | ConvertFrom-Json)
 }
 function Screenshot([string]$Name) {
     Invoke-Adb @('shell','screencap','-p','/sdcard/widget-test.png') | Out-Null

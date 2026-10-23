@@ -1,5 +1,5 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/auto-marquee-acceptance')
-. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
+param([string]$OutputDirectory='artifacts/auto-marquee-acceptance', [string]$FixturePackage='com.example.mediawidget')
+. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage $FixturePackage
 Add-Type -AssemblyName System.Drawing
 function Title-Capture([string]$Name) {
     Screenshot $Name
@@ -30,7 +30,8 @@ function Title-Difference([string]$First,[string]$Second) {
     } finally {$a.Dispose();$b.Dispose()}
 }
 Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/com.example.mediawidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
 Start-Sleep -Seconds 3
 Fixture 'pause'
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null

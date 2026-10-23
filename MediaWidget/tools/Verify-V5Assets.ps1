@@ -1,5 +1,5 @@
-param([string]$SourceDirectory='C:/Users/David/Projects/Android/artifacts/v5-source/music-widget-v5',
-      [string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/media-widget-v5-source-audit')
+param([string]$SourceDirectory='artifacts/v5-source/music-widget-v5',
+      [string]$OutputDirectory='artifacts/media-widget-v5-source-audit')
 # Audit image layers only; never executes any code from the handoff archive.
 Add-Type -AssemblyName System.Drawing
 New-Item -ItemType Directory -Force $OutputDirectory | Out-Null

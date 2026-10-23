@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/nfr-profile',[int]$Cycles=30,[int]$SampleSeconds=20)
+param([string]$OutputDirectory='artifacts/nfr-profile',[int]$Cycles=30,[int]$SampleSeconds=20)
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Preview-ArtworkColors.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 $OutputDirectory=(Resolve-Path $OutputDirectory).Path
 $memory=[Collections.Generic.List[object]]::new()

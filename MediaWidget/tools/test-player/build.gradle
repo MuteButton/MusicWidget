@@ -1,0 +1,34 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+def fixtureSources = tasks.register('prepareFixtureSources', Sync) {
+    from('../../app/src/debug/java') {
+        include '**/DebugMediaActivity.kt', '**/DebugMediaService.kt', '**/DebugMediaReceiver.kt'
+    }
+    into layout.buildDirectory.dir('generated/fixture')
+}
+
+// Separate, debug-only driver: never a dependency of the shipping widget APK.
+android {
+    namespace 'com.example.mediawidget'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.example.mediawidget.testplayer'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    sourceSets.main {
+        java.srcDirs = [layout.buildDirectory.dir('generated/fixture')]
+        res.srcDirs = ['../../app/src/debug/res']
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions { jvmTarget = '1.8' }
+}
+tasks.named('preBuild').configure { dependsOn fixtureSources }

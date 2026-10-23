@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/additional-feature-scenarios')
+param([string]$OutputDirectory='artifacts/additional-feature-scenarios')
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 function Home-Widget {
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null

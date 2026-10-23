@@ -5,8 +5,8 @@ param(
     [Parameter(Mandatory=$true)][int]$Width,
     [Parameter(Mandatory=$true)][int]$Height,
     [switch]$Idle,
-    [string]$SourceDirectory = 'C:/Users/David/Projects/Android/artifacts/v5-source/music-widget-v5',
-    [string]$OutputDirectory = 'C:/Users/David/Projects/Android/artifacts/media-widget-v5-comparison'
+    [string]$SourceDirectory = 'artifacts/v5-source/music-widget-v5',
+    [string]$OutputDirectory = 'artifacts/media-widget-v5-comparison'
 )
 Add-Type -AssemblyName System.Drawing
 if (-not ('WidgetV5Comparison' -as [type])) { Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @'

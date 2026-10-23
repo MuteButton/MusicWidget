@@ -1,6 +1,6 @@
 param(
-    [string]$OutputDirectory = ('C:/Users/David/Projects/Android/artifacts/full-regression-' + (Get-Date -Format 'yyyyMMdd-HHmmss')),
-    [string]$Adb = 'C:/Users/David/AppData/Local/Android/Sdk/platform-tools/adb.exe',
+    [string]$OutputDirectory = ('artifacts/full-regression-' + (Get-Date -Format 'yyyyMMdd-HHmmss')),
+    [string]$Adb = (Join-Path $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }) 'platform-tools/adb.exe'),
     [ValidateSet('core','lifecycle','marquee','browser','additional_scenarios','idle_routing','colors','launcher_glass','native_idle','native_playing','real_chrome')]
     [string[]]$Suites = @('core','lifecycle','marquee','browser','additional_scenarios','idle_routing','colors','launcher_glass','native_idle','native_playing','real_chrome')
 )

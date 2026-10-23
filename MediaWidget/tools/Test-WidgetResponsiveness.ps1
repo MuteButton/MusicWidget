@@ -1,8 +1,8 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/nfr-interaction')
-. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
+param([string]$OutputDirectory='artifacts/nfr-interaction', [string]$FixturePackage='com.example.mediawidget')
+. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage $FixturePackage
 $latencies=[Collections.Generic.List[double]]::new()
 try {
-    Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/com.example.mediawidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
     Show-WidgetPage
     Assert-Eventually { $null -ne (Find-Node (Read-Ui) 'btn_next') } 'Playback control available for responsiveness sample'

@@ -1,4 +1,4 @@
-﻿# Development guide
+# Development guide
 
 Music Widget is a native Android home-screen widget. The product overview and screenshots are in the [repository README](../../README.md).
 
@@ -62,9 +62,34 @@ From the repository root, after installing the current debug APK and UI probe an
 .\MediaWidget\tools\Test-WidgetResponsiveness.ps1
 ```
 
-Use the dedicated emulator setup described in [regression coverage](../tools/REGRESSION_COVERAGE.md). The real Chrome group requires Node.js, completed Chrome onboarding, and free localhost port 8765. Test helpers currently default to the original developer's Windows SDK/workspace paths; adjust those defaults for another machine. Tests interrupt playback and restore saved widget preferences where documented.
+Use the dedicated emulator setup described in [regression coverage](../tools/REGRESSION_COVERAGE.md). The real Chrome group requires Node.js, completed Chrome onboarding, and free localhost port 8765. Run helpers from the repository root. They resolve the SDK from ANDROID_HOME, ANDROID_SDK_ROOT, or the standard Windows local application-data location; explicit SDK/ADB parameters can override those defaults. Tests interrupt playback and restore saved widget preferences where documented.
 
 The suite taps actual widget controls, checks MediaSession callbacks, captures rendered UI, and compares visual evidence. The [acceptance ledger](../tools/FEATURE_ACCEPTANCE.md) distinguishes current-APK automated results from earlier real YouTube/manual evidence. Native idle has an exact reference assertion; live playing data and adaptive colors are not claimed to be pixel-identical to a static mockup.
+
+## Signed release verification
+
+See [release acceptance](../tools/RELEASE_ACCEPTANCE.md) for the delivered APK identity and measured results. The standalone `:test-player` module publishes media sessions in a separate application; it is not bundled into the shipping widget. Build from `MediaWidget` with local signing configuration:
+
+```powershell
+.\gradlew.bat :app:assembleRelease :app:testDebugUnitTest :app:lintRelease :test-player:assembleDebug --max-workers=1
+```
+
+Install the signed release and `tools/test-player/build/outputs/apk/debug/test-player-debug.apk`, enable notification access, and add a full-width widget. A release signing certificate different from an installed debug build requires uninstalling that debug build first (which removes its settings and widgets). Run from the repository root:
+
+```powershell
+.\MediaWidget\tools\Test-ReleaseApk.ps1 -Apk artifacts/final-release/MusicWidget-1.0-release.apk
+.\MediaWidget\tools\Test-WidgetMarquee.ps1 -FixturePackage com.example.mediawidget.testplayer
+adb shell am force-stop com.example.mediawidget.testplayer
+.\MediaWidget\tools\Test-RealChrome.ps1 -ReleaseApk
+.\MediaWidget\tools\Test-BrowserUrl.ps1 -ReleaseApk
+.\MediaWidget\tools\Test-WidgetResponsiveness.ps1 -FixturePackage com.example.mediawidget.testplayer
+.\MediaWidget\tools\Test-ReleaseStress.ps1
+.\MediaWidget\tools\Test-RepositoryHygiene.ps1
+```
+
+Run these sequentially on a dedicated emulator. Release browser testing leaves Chrome selected with an empty URL; it cannot back up private release preferences through `run-as`. Release stress measures unforced-GC PSS growth and process survival; the detailed retained-object analysis in NFR_VERIFICATION.md uses the debug build.
+
+Build outputs, signing files, local IDE settings, and private evidence stay ignored. The hygiene script scans tracked/candidate text for private home paths and common credentials without printing credential values. It does not rewrite history or change Git author metadata.
 
 ## README image provenance
 

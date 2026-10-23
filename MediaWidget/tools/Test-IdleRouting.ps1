@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/idle-routing-scenarios')
+param([string]$OutputDirectory='artifacts/idle-routing-scenarios')
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 function Set-Routing([string]$Preferred,[string]$Last) {
     Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null

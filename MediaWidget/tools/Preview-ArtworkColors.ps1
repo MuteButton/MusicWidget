@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/artwork-glass-preview',[switch]$DefinitionsOnly)
+param([string]$OutputDirectory='artifacts/artwork-glass-preview',[switch]$DefinitionsOnly)
 $onlyDefine=$DefinitionsOnly
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 function Set-GlassMode([string]$Mode) {

@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/media-widget-v5-native-idle')
+param([string]$OutputDirectory='artifacts/media-widget-v5-native-idle')
 . ([scriptblock]::Create((Get-Content -LiteralPath 'MediaWidget/tools/Test-WidgetEmulator.ps1' -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 try {
     Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.debug.IdleReferenceActivity') | Out-Null

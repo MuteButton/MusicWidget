@@ -22,7 +22,7 @@ For the isolated copy only, `libEGL.dll`, `libGLESv2.dll`, and `libGLES_CM.dll` 
 Launch from the repository root:
 
 ```powershell
-$env:ANDROID_HOME = 'C:/Users/David/AppData/Local/Android/Sdk'
+$env:ANDROID_HOME = $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' })
 $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
 & './artifacts/emulator-37.2.12/emulator/emulator.exe' `
   -avd S25_Edge_Approx_API_36_1 -no-window -no-audio -no-boot-anim `

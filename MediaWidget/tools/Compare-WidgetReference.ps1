@@ -1,12 +1,12 @@
 param(
-    [string]$Reference = 'C:/Users/David/Projects/Android/artifacts/reference.png',
+    [string]$Reference = 'artifacts/reference.png',
     [Parameter(Mandatory=$true)][string]$Screenshot,
     [Parameter(Mandatory=$true)][int]$X,
     [Parameter(Mandatory=$true)][int]$Y,
     [Parameter(Mandatory=$true)][int]$Width,
     [Parameter(Mandatory=$true)][int]$Height,
     [switch]$Idle,
-    [string]$OutputDirectory = 'C:/Users/David/Projects/Android/artifacts/media-widget-reference-comparison'
+    [string]$OutputDirectory = 'artifacts/media-widget-reference-comparison'
 )
 # Diagnostic only: never used as widget rendering or substituted for an emulator capture.
 Add-Type -AssemblyName System.Drawing

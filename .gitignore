@@ -1,0 +1,21 @@
+﻿# Local verification evidence, user design inputs, and emulator tooling.
+# Curated product screenshots live in MediaWidget/docs/images instead.
+/artifacts/
+/emulator*.log
+
+# Machine-local IDE/build state (including already-untracked Android Studio files).
+**/.idea/
+**/.gradle/
+**/.kotlin/
+**/build/
+.vscode/
+**/local.properties
+
+# Signing material must stay local.
+**/keystore.properties
+*.keystore
+*.jks
+*.p12
+*.pfx
+.env
+.env.*

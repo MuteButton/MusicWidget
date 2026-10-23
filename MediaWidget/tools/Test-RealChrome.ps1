@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/real-chrome-regression')
+param([string]$OutputDirectory='artifacts/real-chrome-regression', [switch]$ReleaseApk)
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 $OutputDirectory=(Resolve-Path $OutputDirectory).Path
 $events=Join-Path $OutputDirectory 'events.jsonl'
@@ -50,7 +50,15 @@ try {
     Show-WidgetPage
     $mainPid=(Invoke-Adb @('shell','pidof','com.example.mediawidget')).Trim()
     if($mainPid -notmatch '^\d+$'){throw "Unexpected widget process id: $mainPid"}
-    Invoke-Adb @('shell','run-as','com.example.mediawidget','kill','-9',$mainPid) | Out-Null
+    if($ReleaseApk) {
+        # Shipping builds correctly disallow run-as; exercise an actual stop/relaunch.
+        Invoke-Adb @('shell','am','force-stop','com.example.mediawidget') | Out-Null
+        Invoke-Adb @('shell','am','start','-W','-n','com.example.mediawidget/.MainActivity') | Out-Null
+        Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
+        Show-WidgetPage
+    } else {
+        Invoke-Adb @('shell','run-as','com.example.mediawidget','kill','-9',$mainPid) | Out-Null
+    }
     Assert-Eventually {
         # pidof exits 1 during the expected interval before Android restarts it.
         $newPid=(& $Adb shell pidof com.example.mediawidget) -join ''

@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.example.mediawidget.MediaWidgetProvider
 
 /** ADB-only entry point. This entire source set is omitted from release builds. */
 class DebugMediaActivity : Activity() {
@@ -30,7 +29,7 @@ class DebugMediaActivity : Activity() {
         if (command == "pin") {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 AppWidgetManager.getInstance(this).requestPinAppWidget(
-                    ComponentName(this, MediaWidgetProvider::class.java), null, null
+                    ComponentName("com.example.mediawidget", "com.example.mediawidget.MediaWidgetProvider"), null, null
                 )
             }
         } else if (command != "show") {

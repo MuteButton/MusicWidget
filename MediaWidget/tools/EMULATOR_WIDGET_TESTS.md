@@ -11,7 +11,7 @@ Run all deterministic emulator groups with Test-AllEmulator.ps1. See [coverage, 
 Use the installed SDK's `adb` and the emulator's serial. Examples below omit `-s emulator-5554` when only one device is connected.
 
 ```powershell
-$adb = 'C:\Users\David\AppData\Local\Android\Sdk\platform-tools\adb.exe'
+$adb = (Join-Path $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }) 'platform-tools/adb.exe')
 $fixture = 'com.example.mediawidget/.debug.DebugMediaActivity'
 & $adb shell am start -n $fixture --es command reset
 & $adb shell input keyevent KEYCODE_HOME

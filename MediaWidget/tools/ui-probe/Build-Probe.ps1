@@ -1,4 +1,4 @@
-param([string]$Sdk = 'C:/Users/David/AppData/Local/Android/Sdk', [string]$Jdk = 'C:/Program Files/Android/Android Studio/jbr')
+param([string]$Sdk = $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }), [string]$Jdk = 'C:/Program Files/Android/Android Studio/jbr')
 $ErrorActionPreference = 'Stop'
 $probeRoot = Join-Path (Get-Location) 'tools/ui-probe'
 $output = Join-Path (Get-Location) '../artifacts/ui-probe'

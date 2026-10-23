@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/artwork-colors-acceptance')
+param([string]$OutputDirectory='artifacts/artwork-colors-acceptance')
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Preview-ArtworkColors.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 Add-Type -AssemblyName System.Drawing
 function Crop-Hash([string]$File,[Drawing.Rectangle]$Bounds) {

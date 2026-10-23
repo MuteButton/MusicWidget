@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='C:/Users/David/Projects/Android/artifacts/youtube-widget-test')
+param([string]$OutputDirectory='artifacts/youtube-widget-test')
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 Add-Type -AssemblyName System.Drawing
 $samples=[Collections.Generic.List[object]]::new()

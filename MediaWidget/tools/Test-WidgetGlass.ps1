@@ -1,4 +1,4 @@
-param([string]$OutputDirectory = 'C:/Users/David/Projects/Android/artifacts/media-widget-v5-comparison')
+param([string]$OutputDirectory = 'artifacts/media-widget-v5-comparison')
 . ([scriptblock]::Create((Get-Content -LiteralPath 'MediaWidget/tools/Test-WidgetEmulator.ps1' -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
 $packagePaths = Invoke-Adb @('shell','pm','path','com.example.mediawidget')
 $packageLine = ($packagePaths -split "`n" | Where-Object { $_ -match '^package:/data/app/.*/base\.apk$' } | Select-Object -First 1)

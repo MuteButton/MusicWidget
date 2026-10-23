@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "MediaWidget"
 include ':app'
+include ':test-player'
+project(':test-player').projectDir = file('tools/test-player')
