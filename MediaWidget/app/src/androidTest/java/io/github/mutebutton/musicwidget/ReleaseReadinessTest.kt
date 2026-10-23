@@ -11,7 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.scrollTo
+import androidx.test.espresso.action.ViewActions.swipeUp
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -64,7 +64,10 @@ class ReleaseReadinessTest {
                 }
                 assertTrue(activity.findViewById<Button>(R.id.grant_button).isEnabled)
             }
-            onView(withId(R.id.privacy_button)).perform(scrollTo(), click())
+            // Exercise a user gesture; requestRectangleOnScreen-based scrollTo can
+            // stop underneath system insets on Android 16's edge-to-edge window.
+            onView(withId(R.id.setup_root)).perform(swipeUp())
+            onView(withId(R.id.privacy_button)).check(matches(isDisplayed())).perform(click())
             onView(withId(android.R.id.message)).check(matches(withText(containsString("Developer: MuteButton"))))
             onView(withId(android.R.id.button1)).check(matches(isDisplayed())).perform(click())
         }
