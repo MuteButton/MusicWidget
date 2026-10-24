@@ -1,4 +1,4 @@
-name: Verify Music Widget
+name: Verify OnCue
 on:
   push:
   pull_request:

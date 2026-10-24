@@ -1,6 +1,6 @@
 # Development guide
 
-Music Widget is a native Android home-screen widget. The product overview and screenshots are in the [repository README](../../README.md).
+OnCue is a native Android home-screen widget. The product overview and screenshots are in the [repository README](../../README.md).
 
 ## Build and install
 
@@ -68,7 +68,7 @@ The suite taps actual widget controls, checks MediaSession callbacks, captures r
 
 ## Signed release verification
 
-See [release acceptance](../tools/NEUTRAL_RELEASE_ACCEPTANCE.md) for the delivered APK identity and measured results. The standalone `:test-player` module publishes media sessions in a separate application; it is not bundled into the shipping widget. Build from `MediaWidget` with local signing configuration:
+See [release acceptance](../tools/ONCUE_RELEASE_ACCEPTANCE.md) for the delivered APK identity and measured results. The standalone `:test-player` module publishes media sessions in a separate application; it is not bundled into the shipping widget. Build from `MediaWidget` with local signing configuration:
 
 ```powershell
 .\gradlew.bat :app:assembleRelease :app:testDebugUnitTest :app:lintRelease :test-player:assembleDebug --max-workers=1
@@ -77,7 +77,7 @@ See [release acceptance](../tools/NEUTRAL_RELEASE_ACCEPTANCE.md) for the deliver
 Install the signed release and `tools/test-player/build/outputs/apk/debug/test-player-debug.apk`, enable notification access, and add a full-width widget. A release signing certificate different from an installed debug build requires uninstalling that debug build first (which removes its settings and widgets). Run from the repository root:
 
 ```powershell
-.\MediaWidget\tools\Test-ReleaseApk.ps1 -Apk artifacts/public-release/MusicWidget-1.1.apk
+.\MediaWidget\tools\Test-ReleaseApk.ps1 -Apk artifacts/oncue-release/OnCue-1.2.apk
 .\MediaWidget\tools\Test-WidgetMarquee.ps1 -FixturePackage io.github.mutebutton.musicwidget.testplayer
 adb shell am force-stop io.github.mutebutton.musicwidget.testplayer
 .\MediaWidget\tools\Test-RealChrome.ps1 -ReleaseApk

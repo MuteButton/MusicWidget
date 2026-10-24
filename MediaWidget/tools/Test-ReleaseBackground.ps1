@@ -1,6 +1,6 @@
 param(
-    [string]$Apk='artifacts/public-release-neutral/MusicWidget-1.1.apk',
-    [string]$OutputDirectory='artifacts/public-release-neutral/background',
+    [string]$Apk='artifacts/oncue-release/OnCue-1.2.apk',
+    [string]$OutputDirectory='artifacts/oncue-release/background',
     [int]$Cycles=3
 )
 # Dedicated, already configured emulator only. Uses the actual signed release.

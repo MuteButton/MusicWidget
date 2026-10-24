@@ -2,9 +2,11 @@
 
 ## Stable identity and phone installation
 
-Music Widget 1.1 uses `io.github.mutebutton.musicwidget`, version code 2, minimum Android 7.0 (API 24), and target API 36. The old `com.example.mediawidget` prototype is a separate app: its widget and notification permission do not migrate automatically. Add the new widget and grant access once. Future releases must retain the new ID and signing certificate and increase the version code.
+OnCue 1.2 uses `io.github.mutebutton.musicwidget`, version code 3, minimum Android 7.0 (API 24), and target API 36. The old `com.example.mediawidget` prototype is a separate app: its widget and notification permission do not migrate automatically. Add the new widget and grant access once. Future releases must retain the new ID and signing certificate and increase the version code.
 
 The signed universal APK is generated from the signed app bundle by Google's bundletool. It can be downloaded directly to a phone and installed without Google Play. The AAB is for store submission, not direct installation.
+
+OnCue is the new name for the neutral-signed Music Widget 1.1 release. The application ID and signing certificate are unchanged, so that release updates in place without reinstalling or resetting settings. The GitHub repository URL and existing signing-backup folder retain their original names.
 
 ## Build and package
 
@@ -18,10 +20,10 @@ From the repository root, with bundletool 1.18.3 at `artifacts/tooling/bundletoo
 
 ```powershell
 .\MediaWidget\tools\Package-Release.ps1 -DeviceApks
-python MediaWidget/tools/audit_dependencies.py MediaWidget/app/build/reports/dependency-inventory.json artifacts/public-release/dependency-audit.json
+python MediaWidget/tools/audit_dependencies.py MediaWidget/app/build/reports/dependency-inventory.json artifacts/oncue-release/dependency-audit.json
 ```
 
-Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/public-release/` are `MusicWidget-1.1.apk`, `MusicWidget-1.1.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
+Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/oncue-release/` are `OnCue-1.2.apk`, `OnCue-1.2.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
 
 Before an update, verify the certificate matches the previous release, install with `adb install -r`, and verify settings, permissions and widget placement survive. A new signing certificate requires a planned migration; do not casually regenerate the release key.
 
@@ -31,7 +33,7 @@ The public release uses the neutral certificate subject `CN=MuteButton, OU=Music
 
 The owner-authorized setup saved a matching encrypted PKCS12 keystore and its recovery password in the Windows Documents folder, under `Music Widget signing backup`. That folder restricts access to the current Windows account and SYSTEM. The recovery password file is plaintext: move a copy of the complete folder to an encrypted off-device vault and verify recovery before publication. Same-PC storage is not an independent backup. Never commit these files. `tools/Initialize-PublicSigning.ps1` is a one-time initializer and refuses to overwrite an existing identity.
 
-The neutral release artifacts and their fresh emulator evidence are under ignored `artifacts/public-release-neutral/`; earlier `artifacts/public-release/` evidence belongs to the previous signing identity.
+The neutral release artifacts and their fresh emulator evidence are under ignored `artifacts/public-release-neutral/`; earlier `artifacts/public-release/` evidence belongs to the previous signing identity. The current OnCue 1.2 artifacts and verification are in `artifacts/oncue-release/`.
 
 ## Privacy, security and artwork
 
@@ -40,6 +42,8 @@ The neutral release artifacts and their fresh emulator evidence are under ignore
 - The widget action receiver is not exported. The notification listener is protected by Android's notification-listener binding permission. Control PendingIntents are explicit and immutable. The exported setup activity does not accept arbitrary destination URLs from callers.
 - The owner confirmed on October 23, 2026 that the supplied v5 design and README/demo artwork may be redistributed. The code's MIT license alone does not establish image rights. Keep that confirmation with release records.
 - The resolved production dependency scan uses OSV and sends Maven coordinates only. No advisory results are a database snapshot, not a guarantee of no vulnerabilities.
+
+Current signed APK identity and upgrade results: [OnCue 1.2 acceptance](../tools/ONCUE_RELEASE_ACCEPTANCE.md).
 
 ## Automated verification
 
@@ -51,10 +55,10 @@ The release integration scripts test the actual signed APK with the separate acc
 
 ## Store listing draft
 
-- Name: **Music Widget**
+- Name: **OnCue**
 - Developer: **MuteButton**
 - Short description: **Artwork-inspired glass, playback controls and live music progress.**
-- Description: Music Widget brings your current track, album artwork and playback controls to your Android home screen. Choose colors inspired by your artwork or a consistent Classic glass finish. Long titles scroll once in the full layout. Tap the track to return to your player, or choose a default app and optional browser URL for when nothing is playing. Notification access is required to discover media sessions. Available controls, progress and browser-tab navigation depend on the media app. Full glass styling requires Android 12 or newer; earlier versions use the native layout.
+- Description: OnCue brings your current track, album artwork and playback controls to your Android home screen. Choose colors inspired by your artwork or a consistent Classic glass finish. Long titles scroll once in the full layout. Tap the track to return to your player, or choose a default app and optional browser URL for when nothing is playing. Notification access is required to discover media sessions. Available controls, progress and browser-tab navigation depend on the media app. Full glass styling requires Android 12 or newer; earlier versions use the native layout.
 - Support: https://github.com/MuteButton/MusicWidget/issues
 - Privacy URL after publishing this file: use the public repository URL for PRIVACY.md on the release/default branch.
 - Data safety draft: the app does not transmit data to the developer and has no analytics/ads SDK. It accesses media information locally and stores settings; Android backup and explicit launches of other apps are disclosed in the privacy policy. Confirm the current Console questionnaire against this behavior before submission.

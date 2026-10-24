@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Apk,[string]$OutputDirectory='artifacts/public-release/acceptance')
+param([Parameter(Mandatory=$true)][string]$Apk,[string]$OutputDirectory='artifacts/oncue-release/acceptance')
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.musicwidget.testplayer'
 $localHash=(Get-FileHash $Apk -Algorithm SHA256).Hash
 $remote=(Invoke-Adb @('shell','pm','path','io.github.mutebutton.musicwidget')).Trim().Substring(8)

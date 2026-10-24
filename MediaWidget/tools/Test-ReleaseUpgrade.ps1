@@ -1,8 +1,8 @@
 param(
-    [string]$Apk='artifacts/public-release/MusicWidget-1.1.apk',
-    [string]$DeviceApks='artifacts/public-release/device.apks',
+    [string]$Apk='artifacts/oncue-release/OnCue-1.2.apk',
+    [string]$DeviceApks='artifacts/oncue-release/device.apks',
     [string]$Bundletool='artifacts/tooling/bundletool-1.18.3.jar',
-    [string]$OutputDirectory='artifacts/public-release/upgrade-backup'
+    [string]$OutputDirectory='artifacts/oncue-release/upgrade-backup'
 )
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.musicwidget.testplayer'
 $package='io.github.mutebutton.musicwidget'

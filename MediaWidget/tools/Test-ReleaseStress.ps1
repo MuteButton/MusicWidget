@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='artifacts/public-release/stress', [int]$Cycles=30)
+param([string]$OutputDirectory='artifacts/oncue-release/stress', [int]$Cycles=30)
 . ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.musicwidget.testplayer'
 $samples=[Collections.Generic.List[object]]::new()
 function Sample([string]$Name) {

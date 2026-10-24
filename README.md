@@ -1,4 +1,4 @@
-# Music Widget
+# OnCue
 
 **Your music. Your artwork. Your home screen.**
 
@@ -6,7 +6,7 @@ A glass-style Android widget that brings album art, playback controls, and live 
 
 [Get started](#get-started) · [How it works](#made-for-everyday-listening) · [For developers](#for-developers)
 
-![Music Widget in blue, green, and pink artwork-inspired glass, showing album art, track information, playback controls, and progress.](MediaWidget/docs/images/artwork-glass-showcase.png)
+![OnCue in blue, green, and pink artwork-inspired glass, showing album art, track information, playback controls, and progress.](MediaWidget/docs/images/artwork-glass-showcase.png)
 
 *Actual emulator captures of the full glass layout, using demo tracks and test artwork.*
 
@@ -28,8 +28,8 @@ Prefer a consistent look? Choose **Classic glass** for the blue-purple finish. W
 ## Get started
 
 1. Install an APK built from this repository. See the [build guide](MediaWidget/docs/DEVELOPMENT.md#build-and-install).
-2. Open Music Widget and enable **Notification Access** using its setup action. This lets it discover active media sessions.
-3. Add **Music Widget** from your launcher's widget picker, or use the app's add-widget action.
+2. Open OnCue and enable **Notification Access** using its setup action. This lets it discover active media sessions.
+3. Add **OnCue** from your launcher's widget picker, or use the app's add-widget action.
 4. Start playback in a media app, then return to your home screen.
 
 In setup, choose your preferred media app and switch between **Artwork glass** and **Classic glass**. **Open URL** appears only when the selected app is a browser; clear it to open that browser normally.
@@ -42,7 +42,7 @@ Your media app supplies the track information and supported controls. Unknown-du
 
 ## Local by design
 
-Music Widget needs no account and has no Internet permission. Media information is processed on your device; player choices and optional browser URLs are saved locally. Your chosen player or browser handles streaming and its own network connection.
+OnCue needs no account and has no Internet permission. Media information is processed on your device; player choices and optional browser URLs are saved locally. Your chosen player or browser handles streaming and its own network connection.
 
 Background work follows playback: progress updates stop when the screen is off, playback is paused, or no widget is present. Artwork caches are bounded, and title animation runs in the launcher.
 

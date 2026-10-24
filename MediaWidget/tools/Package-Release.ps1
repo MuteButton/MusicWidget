@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDirectory='artifacts/public-release',
+    [string]$OutputDirectory='artifacts/oncue-release',
     [string]$Bundletool='artifacts/tooling/bundletool-1.18.3.jar',
     [switch]$DeviceApks
 )
@@ -17,7 +17,7 @@ $key=if([IO.Path]::IsPathRooted($sign.storeFile)){$sign.storeFile}else{Join-Path
 New-Item -ItemType Directory -Force $OutputDirectory | Out-Null
 $out=(Resolve-Path $OutputDirectory).Path
 if(-not $out.StartsWith((Join-Path $root 'artifacts')+[IO.Path]::DirectorySeparatorChar)){throw 'Release output must stay under ignored artifacts/'}
-$bundle=Join-Path $out 'MusicWidget-1.1.aab'
+$bundle=Join-Path $out 'OnCue-1.2.aab'
 Copy-Item (Join-Path $app 'build/outputs/bundle/release/app-release.aab') $bundle -Force
 $private=Join-Path $out ('.signing-'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory $private | Out-Null
@@ -32,7 +32,7 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Universal APK generation failed'}
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip=[IO.Compression.ZipFile]::OpenRead($universal)
-    try {[IO.Compression.ZipFileExtensions]::ExtractToFile($zip.GetEntry('universal.apk'),(Join-Path $out 'MusicWidget-1.1.apk'),$true)} finally {$zip.Dispose()}
+    try {[IO.Compression.ZipFileExtensions]::ExtractToFile($zip.GetEntry('universal.apk'),(Join-Path $out 'OnCue-1.2.apk'),$true)} finally {$zip.Dispose()}
     if($DeviceApks){
         & $java -jar $Bundletool build-apks @common "--output=$(Join-Path $out 'device.apks')" --connected-device "--adb=$adb"
         if($LASTEXITCODE -ne 0){throw 'Device APK generation failed'}
