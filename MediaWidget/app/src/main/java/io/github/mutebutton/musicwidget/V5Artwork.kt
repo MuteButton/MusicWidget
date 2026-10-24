@@ -239,7 +239,9 @@ internal object V5Artwork {
             })
         }
         val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { this.shader=shader }
-        canvas.clipPath(Path().apply { addRoundRect(RectF(14f,5f,1015f,220f),102f,102f,Path.Direction.CW) })
+        // The raster rim has 80px corners, not a capsule's half-height radius.
+        // Keep only the thin rim inset; a larger radius exposes a crescent of glass.
+        canvas.clipPath(Path().apply { addRoundRect(RectF(14f,5f,1015f,220f),80f,80f,Path.Direction.CW) })
         canvas.drawRect(0f,0f,307f,225f,paint)
         paint.shader=LinearGradient(215f,0f,307f,0f,Color.WHITE,Color.TRANSPARENT,Shader.TileMode.CLAMP)
         paint.xfermode=PorterDuffXfermode(PorterDuff.Mode.DST_IN)
