@@ -42,16 +42,27 @@ internal object V5Artwork {
                 interpolateRows(it, 772, 101, 901, 142)
             }
         } else {
-        asset(context, R.drawable.v5_idle_glass_underlay).copy(Bitmap.Config.ARGB_8888, true).also {
-            val c = Canvas(it)
-            c.drawBitmap(asset(context, R.drawable.v5_idle_note), 104f, 68f, null)
-            if (connected) {
+            asset(context, R.drawable.v5_idle_glass_underlay).copy(Bitmap.Config.ARGB_8888, true).also {
+                val c = Canvas(it)
+                c.drawBitmap(asset(context, R.drawable.v5_idle_note), 104f, 68f, null)
                 c.drawBitmap(asset(context, R.drawable.v5_idle_title), 298f, 62f, null)
                 c.drawBitmap(asset(context, R.drawable.v5_idle_subtitle), 298f, 119f, null)
                 c.drawBitmap(asset(context, R.drawable.v5_idle_open_app_cta), 722f, 54f, null)
+                applySilhouette(it, playing = false)
             }
         }
+    }
+
+    private fun applySilhouette(bitmap: Bitmap, playing: Boolean) {
+        val pixels = IntArray(bitmap.width * bitmap.height)
+        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
+            val i = y * bitmap.width + x
+            val alpha = Color.alpha(pixels[i]) * GlassSilhouette.alpha(x, y, playing) / 255
+            pixels[i] = if (alpha == 0) Color.TRANSPARENT else
+                (pixels[i] and 0x00ffffff) or (alpha shl 24)
         }
+        bitmap.setPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
     }
 
     private fun interpolateRows(bitmap: Bitmap, left: Int, top: Int, right: Int, bottom: Int) {
@@ -188,7 +199,7 @@ internal object V5Artwork {
         for (id in listOf(R.id.btn_prev,R.id.btn_play,R.id.btn_next)) views.setImageViewResource(id,0)
     }
 
-    private fun playbackSurface(context: Context, active: Boolean, enabledMask: Int): Bitmap {
+    internal fun playbackSurface(context: Context, active: Boolean, enabledMask: Int): Bitmap {
         val key=(enabledMask and 7) or (if(active)8 else 0)
         if(playbackSurfaceKey==key) playbackSurface?.let { return it }
         val bitmap=playing(context).copy(Bitmap.Config.ARGB_8888,true)
@@ -201,6 +212,7 @@ internal object V5Artwork {
         draw(asset(context,R.drawable.v5_playing_previous_button),650f,40f,1)
         draw(transport(context,active),754f,32f,2)
         draw(asset(context,R.drawable.v5_playing_next_button),877f,41f,4)
+        applySilhouette(bitmap, playing = true)
         playbackSurfaceKey=key
         playbackSurface=bitmap
         return bitmap

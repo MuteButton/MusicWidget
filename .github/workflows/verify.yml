@@ -25,7 +25,7 @@ jobs:
         working-directory: MediaWidget
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest :app:writeDependencyInventory --max-workers=2
+          ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:bundleRelease :app:lintRelease :app:assembleDebugAndroidTest :app:writeDependencyInventory --max-workers=2
       - name: Dependency vulnerability scan
         run: python MediaWidget/tools/audit_dependencies.py MediaWidget/app/build/reports/dependency-inventory.json artifacts/dependency-audit.json
       - uses: actions/upload-artifact@v7.0.2

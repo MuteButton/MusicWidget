@@ -2,7 +2,8 @@ param(
     [string]$Adb = (Join-Path $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }) 'platform-tools/adb.exe'),
     [string]$OutputDirectory = 'artifacts/media-widget-redesign',
     [switch]$DefinitionsOnly,
-    [string]$FixturePackage = 'io.github.mutebutton.musicwidget'
+    [string]$FixturePackage = 'io.github.mutebutton.musicwidget',
+    [string]$AppPackage = 'io.github.mutebutton.musicwidget'
 )
 $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
@@ -83,7 +84,7 @@ function Wait-Activity([string]$Pattern, [int]$TimeoutSeconds=30) {
     throw "Timed out waiting for activity: $Pattern"
 }
 function Find-Node([xml]$Ui, [string]$Id) {
-    return $Ui.SelectSingleNode("//node[@resource-id='io.github.mutebutton.musicwidget:id/$Id']")
+    return $Ui.SelectSingleNode("//node[@resource-id='${AppPackage}:id/$Id']")
 }
 function Show-WidgetPage {
     # Pinning/resizing can put the widget on a different launcher page.

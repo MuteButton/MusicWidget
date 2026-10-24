@@ -28,7 +28,7 @@ class ReleaseReadinessTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test fun identityAndPermissionsAreSuitableForDistribution() {
-        assertEquals("io.github.mutebutton.musicwidget", context.packageName)
+        assertEquals("io.github.mutebutton.oncue", context.packageName)
         assertEquals(36, context.applicationInfo.targetSdkVersion)
         assertEquals(24, context.applicationInfo.minSdkVersion)
         val permissions = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)

@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDirectory='artifacts/oncue-release',
+    [string]$OutputDirectory='artifacts/oncue-registered-release',
     [string]$Bundletool='artifacts/tooling/bundletool-1.18.3.jar',
     [switch]$DeviceApks
 )
@@ -24,17 +24,26 @@ New-Item -ItemType Directory $private | Out-Null
 try {
     [IO.File]::WriteAllText((Join-Path $private 'store'),$sign.storePassword)
     [IO.File]::WriteAllText((Join-Path $private 'key'),$sign.keyPassword)
+    # Native JVM warnings on stderr are not failures in Windows PowerShell.
+    $ErrorActionPreference='Continue'
     & $java -jar $Bundletool validate "--bundle=$bundle" > (Join-Path $out 'bundle-validation.txt')
+    $ErrorActionPreference='Stop'
     if($LASTEXITCODE -ne 0){throw 'Bundle validation failed'}
     $common=@("--bundle=$bundle","--ks=$key","--ks-key-alias=$($sign.keyAlias)","--ks-pass=file:$(Join-Path $private 'store')","--key-pass=file:$(Join-Path $private 'key')",'--overwrite')
     $universal=Join-Path $out 'universal.apks'
+    # Native JVM warnings on stderr are not failures in Windows PowerShell.
+    $ErrorActionPreference='Continue'
     & $java -jar $Bundletool build-apks @common "--output=$universal" --mode=universal
+    $ErrorActionPreference='Stop'
     if($LASTEXITCODE -ne 0){throw 'Universal APK generation failed'}
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip=[IO.Compression.ZipFile]::OpenRead($universal)
     try {[IO.Compression.ZipFileExtensions]::ExtractToFile($zip.GetEntry('universal.apk'),(Join-Path $out 'OnCue-1.2.apk'),$true)} finally {$zip.Dispose()}
     if($DeviceApks){
+        # Native JVM warnings on stderr are not failures in Windows PowerShell.
+        $ErrorActionPreference='Continue'
         & $java -jar $Bundletool build-apks @common "--output=$(Join-Path $out 'device.apks')" --connected-device "--adb=$adb"
+        $ErrorActionPreference='Stop'
         if($LASTEXITCODE -ne 0){throw 'Device APK generation failed'}
     }
     Get-ChildItem $out -File | Where-Object {$_.Extension -in @('.apk','.aab','.apks')} | Get-FileHash -Algorithm SHA256 |

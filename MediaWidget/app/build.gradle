@@ -14,7 +14,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "io.github.mutebutton.musicwidget"
+        applicationId "io.github.mutebutton.oncue"
         minSdk 24
         targetSdk 36
         versionCode 3
@@ -39,7 +39,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // CI verifies optimized APK/AAB packaging without production secrets.
+            // Local distribution builds retain the existing release identity.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {
