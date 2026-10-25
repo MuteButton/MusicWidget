@@ -1,5 +1,5 @@
-param([string]$OutputDirectory='artifacts/browser-url-test', [switch]$ReleaseApk)
-. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage $(if ($ReleaseApk) { 'io.github.mutebutton.musicwidget.testplayer' } else { 'io.github.mutebutton.musicwidget' })
+param([string]$OutputDirectory='artifacts/browser-url-test', [switch]$ReleaseApk, [string]$AppPackage='io.github.mutebutton.oncue')
+. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -AppPackage $AppPackage -OutputDirectory $OutputDirectory -FixturePackage $(if ($ReleaseApk) { 'io.github.mutebutton.musicwidget.testplayer' } else { $AppPackage })
 function Tap-XmlNode($node) {
     if (-not $node) { throw 'Missing UI node' }
     $b=[regex]::Matches($node.bounds,'\d+') | ForEach-Object {[int]$_.Value}
@@ -25,10 +25,10 @@ function Set-Url([string]$Value) {
     if($Value) { Invoke-Adb @('shell','input','text',$Value) | Out-Null }
     Tap-XmlNode ((Read-Ui).SelectSingleNode("//node[@resource-id='android:id/button1']"))
 }
-Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cp','shared_prefs/media_widget.xml','files/browser-test-prefs.xml') | Out-Null }
+Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
+if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as',$AppPackage,'cp','shared_prefs/media_widget.xml','files/browser-test-prefs.xml') | Out-Null }
 try {
-    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
     Select-Player 'YouTube'
     Assert-True ($null -eq (Find-Node (Read-Ui) 'browser_url_button')) 'YouTube hides Open URL'
     Screenshot 'youtube-no-url'
@@ -45,8 +45,8 @@ try {
     Assert-True ($null -ne (Read-Ui).SelectSingleNode("//node[@class='android.widget.EditText']")) 'Invalid scheme keeps editor open'
     Invoke-Adb @('shell','input','keyevent','KEYCODE_BACK') | Out-Null
     Tap-XmlNode ((Read-Ui).SelectSingleNode("//node[@resource-id='android:id/button2']"))
-    Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
+    Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
     Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
     Start-Sleep -Seconds 3
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
@@ -59,6 +59,8 @@ try {
     Tap-Node 'album_art'
     $active=Wait-Activity 'ResumedActivity.*DebugMediaActivity'
     Assert-True ($active -match 'ResumedActivity.*DebugMediaActivity') 'Active artwork opens session player despite saved browser URL'
+    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity",'-a','io.github.mutebutton.musicwidget.OPEN_PLAYER') | Out-Null
+    Assert-True ((Wait-Activity 'ResumedActivity.*DebugMediaActivity') -match 'ResumedActivity.*DebugMediaActivity') 'Fallback action prioritizes active session over preferred browser URL'
     Fixture 'stop'
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
     Show-WidgetPage
@@ -67,9 +69,9 @@ try {
     $activities=Wait-Activity 'dat=https://music.youtube.com'
     $activities | Set-Content (Join-Path $OutputDirectory 'browser-launch.txt')
     Assert-True ($activities -match 'dat=https://music.youtube.com' -and $activities -match 'pkg=com.android.chrome') 'Idle Open App dispatches URL explicitly to Chrome'
-    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
-    Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
+    Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
     Set-Url ''
     Assert-True ((Find-Node (Read-Ui) 'browser_url_status').text -like 'No URL set*') 'Blank input clears browser URL'
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
@@ -78,7 +80,7 @@ try {
     $normalLaunch=Wait-Activity 'ResumedActivity.*com.android.chrome'
     Assert-True ($normalLaunch -match 'ResumedActivity.*com.android.chrome') 'Idle tap without URL opens the chosen browser normally'
 } finally {
-    Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-    if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as','io.github.mutebutton.musicwidget','cp','files/browser-test-prefs.xml','shared_prefs/media_widget.xml') | Out-Null }
-    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
+    Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
+    if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as',$AppPackage,'cp','files/browser-test-prefs.xml','shared_prefs/media_widget.xml') | Out-Null }
+    Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
 }

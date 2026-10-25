@@ -36,15 +36,21 @@ In setup, choose your preferred media app and switch between **Artwork glass** a
 
 ### What works where
 
-Android 7.0+ is supported by the project. The full glass design, artwork-adaptive colors, and automatic title scroll are available in the full-width layout on Android 12+. Narrow widgets and older Android versions use simpler layouts.
+Android 7.0+ is supported by the project. On Android 12+, the glass widget requests one launcher row and scales proportionally to the available space, keeping artwork-adaptive colors and automatic title scroll. Older Android versions use simpler layouts. Existing widgets may need to be resized or removed and added again after updating.
 
 Your media app supplies the track information and supported controls. Unknown-duration media hides progress, and the progress bar is a display rather than a seek slider. Browser tab restoration depends on the destination the browser exposes; real Chrome tab restoration is covered by emulator tests. Launcher spacing and resize behavior can vary.
+
+### Samsung: timer stops after a few seconds
+
+Samsung can freeze OnCue's background process even while its notification listener remains connected. If timestamps and progress stop, open **Settings → Apps → OnCue → Battery → Unrestricted**. This exception applies only to OnCue and can increase battery use. OnCue still stops its timer updates when the screen is off. The Samsung setup screen includes a shortcut to OnCue's app settings.
 
 ## Local by design
 
 OnCue needs no account and has no Internet permission. Media information is processed on your device; player choices and optional browser URLs are saved locally. Your chosen player or browser handles streaming and its own network connection.
 
-Background work follows playback: progress updates stop when the screen is off, playback is paused, or no widget is present. Artwork caches are bounded, and title animation runs in the launcher.
+Background work follows playback: periodic progress updates stop when the screen is off or locked, playback is paused, the reported track end is reached, or no widget is present. Unlocking refreshes the current position. Artwork caches are bounded, and the one-pass title slide runs in the launcher independently of progress updates.
+
+Standard Android widgets do not provide a reliable callback for whether their specific home-screen page is visible. While the phone is unlocked and media is playing, OnCue can therefore still update while another app is in front. It does not request usage-history or accessibility access to guess visibility.
 
 ## For developers
 

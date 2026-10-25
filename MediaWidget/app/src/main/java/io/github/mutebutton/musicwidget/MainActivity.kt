@@ -28,6 +28,16 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         ViewCompat.requestApplyInsets(findViewById(R.id.setup_root))
+        if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) {
+            findViewById<View>(R.id.battery_help).visibility = View.VISIBLE
+            findViewById<Button>(R.id.battery_settings_button).apply {
+                visibility = View.VISIBLE
+                setOnClickListener {
+                    startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:$packageName")))
+                }
+            }
+        }
         findViewById<Button>(R.id.privacy_button).setOnClickListener {
             AlertDialog.Builder(this).setTitle(R.string.privacy_title)
                 .setMessage(R.string.privacy_policy)
@@ -56,7 +66,13 @@ class MainActivity : AppCompatActivity() {
                     dialog.dismiss()
                 }.setNegativeButton(android.R.string.cancel, null).show()
         }
-        if (savedInstanceState == null && intent.action == ACTION_OPEN_PLAYER) openPlayer()
+        if (intent.action == ACTION_OPEN_PLAYER) openPlayer()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.action == ACTION_OPEN_PLAYER) openPlayer()
     }
 
     override fun onResume() {
@@ -86,6 +102,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openPlayer() {
+        // A cached idle click or an active-player launch fallback can arrive here.
+        // Resolve the current session before considering any saved default/URL.
+        val active = WidgetRenderer.chooseController(WidgetRenderer.controllers(this))
+        if (active != null) {
+            val destinations = listOfNotNull(active.sessionActivity,
+                MediaListenerService.instance?.mediaDestination(active)).distinct()
+            for (destination in destinations) {
+                try {
+                    val options = android.app.ActivityOptions.makeBasic()
+                    if (Build.VERSION.SDK_INT >= 34) {
+                        options.setPendingIntentBackgroundActivityStartMode(
+                            if (Build.VERSION.SDK_INT >= 36)
+                                android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE
+                            else android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                    }
+                    destination.send(this, 0, null, null, null, null, options.toBundle())
+                    finish()
+                    return
+                } catch (_: android.app.PendingIntent.CanceledException) { }
+                  catch (_: SecurityException) { }
+            }
+            val launch = packageManager.getLaunchIntentForPackage(active.packageName)
+            if (launch != null) {
+                try {
+                    startActivity(launch)
+                    finish()
+                    return
+                } catch (_: android.content.ActivityNotFoundException) { }
+                  catch (_: SecurityException) { }
+            }
+            // Never substitute a different player or leave setup on screen when
+            // the selected session cannot provide a launchable destination.
+            Toast.makeText(this, R.string.active_player_unavailable, Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
         val preferences = getSharedPreferences(WidgetRenderer.PREFS, MODE_PRIVATE)
         val packages = listOfNotNull(preferences.getString(WidgetRenderer.PREFERRED_PLAYER, null),
             preferences.getString(WidgetRenderer.LAST_PLAYER, null))

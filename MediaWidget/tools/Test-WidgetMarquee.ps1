@@ -1,5 +1,5 @@
-param([string]$OutputDirectory='artifacts/auto-marquee-acceptance', [string]$FixturePackage='io.github.mutebutton.musicwidget')
-. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage $FixturePackage
+param([string]$OutputDirectory='artifacts/auto-marquee-acceptance', [string]$FixturePackage='io.github.mutebutton.musicwidget.testplayer', [string]$AppPackage='io.github.mutebutton.oncue')
+. ([scriptblock]::Create((Get-Content MediaWidget/tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage $FixturePackage -AppPackage $AppPackage
 Add-Type -AssemblyName System.Drawing
 function Title-Capture([string]$Name) {
     Screenshot $Name
@@ -29,8 +29,8 @@ function Title-Difference([string]$First,[string]$Second) {
         return $ratio
     } finally {$a.Dispose();$b.Dispose()}
 }
-Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
+Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
 Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
 Start-Sleep -Seconds 3
 Fixture 'pause'
@@ -39,6 +39,32 @@ Show-WidgetPage
 $node=Find-Node (Read-Ui) 'track_title'
 $b=[regex]::Matches($node.bounds,'\d+') | ForEach-Object {[int]$_.Value}
 $script:titleBounds=[Drawing.Rectangle]::new($b[0],$b[1],$b[2]-$b[0],$b[3]-$b[1])
+# Regression for the playing-only reset: reaching the dense W suffix proves
+# progress through the title, not merely a few pixels of repeated startup jitter.
+function Glyph-Count([string]$Path) {
+    $bitmap=[Drawing.Bitmap]::new($Path)
+    try {
+        $count=0
+        for($y=0;$y -lt $bitmap.Height;$y++){for($x=0;$x -lt $bitmap.Width;$x++){
+            $pixel=$bitmap.GetPixel($x,$y)
+            if($pixel.R -gt 210 -and $pixel.G -gt 210 -and $pixel.B -gt 210){$count++}
+        }}
+        return $count
+    } finally {$bitmap.Dispose()}
+}
+Fixture 'play'
+Fixture 'metadata' @('--es','title',(('.' * 150) + ('W' * 45)))
+Start-Sleep -Seconds 2
+$prefix=Title-Capture '00-playing-prefix'
+$timeBefore=(Find-Node (Read-Ui) 'elapsed_time').text
+Start-Sleep -Seconds 7
+$suffix=Title-Capture '00-playing-suffix'
+$prefixCount=Glyph-Count $prefix
+$suffixCount=Glyph-Count $suffix
+@{prefixPixels=$prefixCount;suffixPixels=$suffixCount} | ConvertTo-Json | Set-Content (Join-Path $OutputDirectory 'playing-title-travel.json')
+Assert-True ($suffixCount -gt (2*$prefixCount)) 'Playing title reaches its distant suffix instead of restarting each second'
+Assert-True ((Find-Node (Read-Ui) 'elapsed_time').text -ne $timeBefore) 'Timer advances throughout the playing title slide'
+Fixture 'pause'
 $long='Midnight_City_Extended_Night_Drive_Mix_With_The_Complete_Concert_Recording'
 Fixture 'metadata' @('--es','title',$long,'--es','artist','Test_Ensemble')
 Start-Sleep -Seconds 2
@@ -48,7 +74,7 @@ Fixture 'seek' @('--el','position','84000')
 Start-Sleep -Seconds 2
 $movingLater=Title-Capture '02-auto-moving-later'
 Assert-True ((Title-Difference $moving $movingLater) -gt 0.01) 'Long title moves automatically and survives a seek refresh'
-Start-Sleep -Seconds 40
+Start-Sleep -Seconds 20
 $finished=Title-Capture '03-restored'
 Assert-True (((Title-Difference $finished $moving) -gt 0.01) -and ((Title-Difference $finished $movingLater) -gt 0.01)) 'Marquee finishes and restores static title'
 Start-Sleep -Seconds 3
@@ -79,6 +105,6 @@ Fixture 'metadata' @('--es','title',$long)
 Start-Sleep -Seconds 2
 Assert-True ((Title-Difference (Title-Capture '08-new-track-scroll') $finished) -gt 0.01) 'Returning to a long title starts a new automatic pass'
 Fixture 'next'
-Start-Sleep -Seconds 40
+Start-Sleep -Seconds 20
 Assert-True ((Find-Node (Read-Ui) 'track_title').text -eq 'Emerald Skies') 'Track change cancels old delayed title restoration'
 Write-Output "Completed $($results.Count) automatic marquee checks."

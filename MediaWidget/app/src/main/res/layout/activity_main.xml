@@ -33,6 +33,12 @@
         <Button android:id="@+id/color_mode_button" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:minHeight="56dp" android:layout_marginTop="16dp" android:text="@string/glass_colors"
             android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
+        <TextView android:id="@+id/battery_help" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="@string/samsung_battery_help"
+            android:textSize="14sp" android:textColor="#B8C8EE" android:visibility="gone" />
+        <Button android:id="@+id/battery_settings_button" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:text="@string/samsung_battery_settings" android:visibility="gone"
+            android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />
         <Button android:id="@+id/privacy_button" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:minHeight="56dp" android:layout_marginTop="8dp" android:text="@string/privacy_title"
             android:textAllCaps="false" android:backgroundTint="#3D416C" android:textColor="#FFFFFF" />

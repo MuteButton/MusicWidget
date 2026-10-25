@@ -1,5 +1,12 @@
 # Feature acceptance ledger
 
+OnCue 1.2.3 tap-routing changes and final-APK checks are tracked in
+[tap-routing acceptance](TAP_ROUTING_ACCEPTANCE.md).
+
+The local OnCue 1.2.2 playing-title, Samsung and lock/unlock checks are documented
+separately in [playing-title acceptance](PLAYING_TITLE_ACCEPTANCE.md). Older results
+below retain their original APK scope.
+
 Verified on 2026-10-22 using API 36.1 and the S25 Edge approximation AVD. Debug regression APK SHA-256: `95bf5ffb2df2764a6dbcfaf4f9e4cb569974846929024e9b3f58e7f3c21811af`. The Chrome playing-tab navigation fix is included.
 
 The signed release is verified separately in [release acceptance](RELEASE_ACCEPTANCE.md); the results below retain their original APK scope.

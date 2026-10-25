@@ -68,12 +68,21 @@ try {
     Fixture 'rapid'
     Assert-Eventually { (Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow' } 'Rapid release updates settle on latest track'
     Fixture 'pause'
-    foreach($id in @('track_title','track_artist','album_art')) {
+    foreach($id in @('track_title','track_artist','album_art','progress_bar','elapsed_time','remaining_time')) {
         Tap-Node $id
         $target=Wait-Activity 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity'
         Assert-True ($target -match 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity') "Release $id opens external player destination"
         Home
     }
+    # Hit empty pill space, not the artwork, text or transport overlays.
+    $bounds=[regex]::Matches((Find-Node (Read-Ui) 'media_state').bounds,'\d+') | ForEach-Object {[int]$_.Value}
+    Invoke-Adb @('shell','input','tap',"$([int](($bounds[0]+$bounds[2])/2))","$($bounds[1]+5)") | Out-Null
+    Assert-True ((Wait-Activity 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity') -match 'DebugMediaActivity') 'Blank pill space opens active player'
+    Home
+    # Exercise the fallback/previously cached idle action with a live session.
+    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity",'-a','io.github.mutebutton.musicwidget.OPEN_PLAYER') | Out-Null
+    Assert-True ((Wait-Activity 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity') -match 'DebugMediaActivity') 'Open-player fallback resolves the active media session'
+    Home
     Mode 'Classic glass'; Screenshot 'classic'
     Mode 'Artwork glass'; Screenshot 'adaptive'
     Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null

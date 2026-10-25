@@ -1,7 +1,10 @@
 <resources>
+    <string name="active_player_unavailable">The current media app could not be opened.</string>
     <string name="app_name">OnCue</string>
     <string name="service_name">OnCue</string>
     <string name="permission_required">Notification Access Required</string>
     <string name="permission_instruction">Please grant notification access to enable media controls.</string>
     <string name="grant_permission">Grant Permission</string>
+    <string name="samsung_battery_help">If the timer freezes on Samsung, open OnCue’s app settings, then Battery → Unrestricted. Samsung may otherwise freeze background updates. This can increase battery use; OnCue stops timer updates when the screen is off.</string>
+    <string name="samsung_battery_settings">Open OnCue app settings</string>
 </resources>

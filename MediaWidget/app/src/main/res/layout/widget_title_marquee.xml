@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/track_title" android:layout_width="match_parent" android:layout_height="match_parent"
-    android:includeFontPadding="false" android:fontFamily="sans-serif-medium" android:textScaleX="1.02"
-    android:singleLine="true" android:ellipsize="marquee" android:marqueeRepeatLimit="1"
-    android:focusable="true" android:focusableInTouchMode="true" android:textColor="#FFF9FC">
-    <requestFocus />
-</TextView>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:layoutAnimation="@anim/widget_title_layout">
+    <TextView android:id="@+id/track_title" android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:includeFontPadding="false" android:fontFamily="sans-serif-medium" android:textScaleX="1.02"
+        android:singleLine="true" android:textColor="#FFF9FC" />
+</FrameLayout>

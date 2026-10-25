@@ -12,7 +12,6 @@ import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.os.SystemClock
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -31,7 +30,8 @@ class MediaListenerService : NotificationListenerService(),
     private val callbacks = mutableMapOf<MediaSession.Token, Pair<MediaController, MediaController.Callback>>()
     private val tick = object : Runnable {
         override fun run() {
-            if (!shouldTick()) return
+            // Deliver the final clamped timestamp once before stopping at duration.
+            if (!connected || !WidgetRenderer.isScreenAvailable(this@MediaListenerService)) return
             active?.let { WidgetRenderer.updateProgress(this@MediaListenerService, it) }
             if (shouldTick()) handler.postDelayed(this, nextTickDelay())
         }
@@ -50,8 +50,14 @@ class MediaListenerService : NotificationListenerService(),
         super.onCreate()
         sessions = getSystemService(MediaSessionManager::class.java)
         ContextCompat.registerReceiver(this, screenReceiver,
-            IntentFilter().apply { addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF) },
-            ContextCompat.RECEIVER_NOT_EXPORTED)
+            IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_USER_PRESENT)
+            },
+            // USER_PRESENT can originate from System UI's privileged UID rather
+            // than UID 1000. All three actions are protected system broadcasts.
+            ContextCompat.RECEIVER_EXPORTED)
     }
 
     override fun onListenerConnected() {
@@ -127,9 +133,14 @@ class MediaListenerService : NotificationListenerService(),
         if (shouldTick()) handler.postDelayed(tick, nextTickDelay())
     }
 
-    private fun shouldTick(): Boolean = connected && WidgetRenderer.isAdvancing(active?.playbackState) &&
-        (active?.metadata?.getLong(android.media.MediaMetadata.METADATA_KEY_DURATION) ?: 0) > 0 &&
-        getSystemService(PowerManager::class.java).isInteractive && WidgetRenderer.widgetIds(this).isNotEmpty()
+    private fun shouldTick(): Boolean {
+        if (!connected || !WidgetRenderer.isScreenAvailable(this) || WidgetRenderer.widgetIds(this).isEmpty()) return false
+        val state = active?.playbackState ?: return false
+        val duration = active?.metadata?.getLong(android.media.MediaMetadata.METADATA_KEY_DURATION) ?: return false
+        return WidgetRenderer.isAdvancing(state) && duration > 0 &&
+            PlaybackMath.position(state.position, state.lastPositionUpdateTime, SystemClock.elapsedRealtime(),
+                state.playbackSpeed, true, duration) < duration
+    }
 
     private fun nextTickDelay(): Long {
         val state = active?.playbackState ?: return 1_000

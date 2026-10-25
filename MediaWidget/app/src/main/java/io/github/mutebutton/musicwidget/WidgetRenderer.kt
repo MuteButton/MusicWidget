@@ -91,9 +91,20 @@ internal object WidgetRenderer {
             .getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374) < 360
     }
 
-    private fun v5(context: Context, id: Int) = Build.VERSION.SDK_INT >= 31 && !compact(context, id)
-    private fun layout(context: Context, id: Int) = if (compact(context, id)) R.layout.widget_media_compact
-        else if (v5(context, id)) R.layout.widget_media_v5 else R.layout.widget_media_control
+    private fun v5(context: Context, id: Int) = Build.VERSION.SDK_INT >= 31
+    private fun layout(context: Context, id: Int) = if (v5(context, id)) R.layout.widget_media_v5
+        else if (compact(context, id)) R.layout.widget_media_compact else R.layout.widget_media_control
+
+    /** Preserve the original pill proportions within the space supplied by the host. */
+    private fun pillWidth(context: Context, id: Int): Float {
+        val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val options = AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
+        val width = options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH
+            else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374).coerceAtLeast(1).toFloat()
+        val height = options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT
+            else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 96).coerceAtLeast(1).toFloat()
+        return WidgetSizing.pillWidth(width, height)
+    }
 
     fun renderAll(context: Context, controller: MediaController?) {
         selectedToken = controller?.sessionToken
@@ -104,7 +115,7 @@ internal object WidgetRenderer {
             titleTracks.remove(id)
         }
         if (ids.isEmpty()) return
-        val interactive = context.getSystemService(android.os.PowerManager::class.java).isInteractive
+        val interactive = isScreenAvailable(context)
         val track = controller?.let {
             TrackIdentity(it.sessionToken, it.metadata?.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
                 it.metadata?.description?.title?.toString(), it.metadata?.description?.subtitle?.toString())
@@ -137,10 +148,16 @@ internal object WidgetRenderer {
         val manager = AppWidgetManager.getInstance(context)
         val views = RemoteViews(context.packageName, layout(context, id))
         val hasMedia = controller != null
+        val destination = controller?.let { mediaIntent(context, it) }
+            ?: setupIntent(context, if (hasAccess(context)) MainActivity.ACTION_OPEN_PLAYER else null)
+        // Cover empty pill space and the timeline as well as artwork/text. Child
+        // transport buttons retain their own actions (including disabled state).
+        views.setOnClickPendingIntent(R.id.widget_container, destination)
+        views.setOnClickPendingIntent(R.id.media_state, destination)
+        views.setOnClickPendingIntent(R.id.glass_surface, destination)
         if (v5(context, id) && Build.VERSION.SDK_INT >= 31) {
             val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-            val widthDp = manager.getAppWidgetOptions(id).getInt(
-                if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374)
+            val widthDp = pillWidth(context, id)
             val state=controller?.playbackState
             val actions=state?.actions ?: 0L
             val enabledMask=(if(actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L)1 else 0) or
@@ -217,23 +234,39 @@ internal object WidgetRenderer {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE) else null)
     }
 
+    internal fun isScreenAvailable(context: Context): Boolean =
+        context.getSystemService(android.os.PowerManager::class.java).isInteractive &&
+            !context.getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked
+
     private fun bindTitle(context: Context, views: RemoteViews, id: Int, controller: MediaController,
                           title: String, scroll: Boolean, widthOverride: Float? = null) {
+        if (Build.VERSION.SDK_INT < 31) return // Legacy layouts have no nested title.
         val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        val width = widthOverride ?: AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
-            .getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374).toFloat()
+        val width = widthOverride ?: pillWidth(context, id)
         val label = RemoteViews(context.packageName,
             if (scroll) R.layout.widget_title_marquee else R.layout.widget_title_static)
         label.setTextViewText(R.id.track_title, title)
         label.setTextViewTextSize(R.id.track_title, android.util.TypedValue.COMPLEX_UNIT_PX,
             32f * width * context.resources.displayMetrics.density / 1030f)
+        if (scroll) {
+            val paint = android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                textSize = 32f * width * context.resources.displayMetrics.density / 1030f
+                textScaleX = 1.02f
+                typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+            }
+            label.setViewLayoutWidth(R.id.track_title, kotlin.math.ceil(android.text.Layout.getDesiredWidth(title, paint)),
+                android.util.TypedValue.COMPLEX_UNIT_PX)
+        }
         label.setOnClickPendingIntent(R.id.track_title,
             mediaIntent(context, controller))
         views.removeAllViews(R.id.title_container)
-        views.addView(R.id.title_container, label)
+        // Reapplying setText restarts TextView's native marquee, even with stable
+        // children. A one-shot layout animation survives text reapplication; the
+        // stable child also prevents progress ticks from reinflating its container.
+        views.addStableView(R.id.title_container, label, if (scroll) 1 else 0)
     }
 
-    private fun mediaIntent(context: Context, controller: MediaController): PendingIntent? =
+    private fun mediaIntent(context: Context, controller: MediaController): PendingIntent =
         controller.sessionActivity ?: MediaListenerService.instance?.mediaDestination(controller)
         ?: playerIntent(context, controller.packageName)
 
@@ -245,8 +278,7 @@ internal object WidgetRenderer {
         val app = context.applicationContext
         val manager = AppWidgetManager.getInstance(app)
         val landscape = app.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        val widthDp = manager.getAppWidgetOptions(id).getInt(
-            if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374)
+        val widthDp = pillWidth(app, id)
         val density = app.resources.displayMetrics.density
         val scale = widthDp * density / 1030f
         val paint = android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -264,10 +296,10 @@ internal object WidgetRenderer {
         }
         display(false)
         if (lineWidth <= viewport) return
-        // Android's native marquee travels line width + one-third viewport at
-        // 30 dp/s, then holds for 1.2 s. Restore the original ellipsis afterward.
-        // Only two delayed updates; the launcher handles every animation frame.
-        val duration = ((lineWidth + viewport / 3f) / (30f * density) * 1000).toLong() + 1700L
+        // The layout animation slides the entire title once in 16 seconds, after
+        // a 600 ms initial hold. Restore ellipsis afterward. Only two delayed
+        // updates; the launcher owns the frames, independent of timer updates.
+        val duration = 17_000L
         val start = Runnable {
             display(true)
             val restore = Runnable {
@@ -301,7 +333,8 @@ internal object WidgetRenderer {
         val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val height = AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
             .getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 96)
-        val visible = duration > 0 && (state?.position ?: -1) >= 0 && height >= if (compact(context, id)) 120 else 96
+        val visible = duration > 0 && (state?.position ?: -1) >= 0 &&
+            (v5(context, id) || height >= if (compact(context, id)) 120 else 96)
         views.setViewVisibility(R.id.progress_container, if (visible) View.VISIBLE else View.GONE)
         if (!visible) {
             views.setBoolean(R.id.elapsed_time, "setStarted", false)
