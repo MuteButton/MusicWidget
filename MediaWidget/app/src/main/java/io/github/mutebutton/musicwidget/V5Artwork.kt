@@ -28,6 +28,9 @@ internal object V5Artwork {
     private var expandedSource = java.lang.ref.WeakReference<Bitmap>(null)
     private var expandedGeneration = -1
     private var expandedCover: Bitmap? = null
+    private var expandedHeight = 225
+    private val rowSurfaces = android.util.LruCache<String, Bitmap>(4)
+    private val rowButtons = mutableMapOf<Int, Bitmap>()
     private fun asset(context: Context, id: Int) = assets.getOrPut(id) {
         BitmapFactory.decodeResource(context.resources, id, BitmapFactory.Options().apply { inScaled = false })
     }
@@ -76,7 +79,7 @@ internal object V5Artwork {
         }
     }
 
-    fun placeholder(context: Context): Bitmap {
+    fun placeholder(context: Context, height: Int = 225): Bitmap {
         val source=missingCover ?: Bitmap.createBitmap(307,225,Bitmap.Config.ARGB_8888).also {
             val canvas=Canvas(it)
             val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -88,7 +91,7 @@ internal object V5Artwork {
             }
             missingCover=it
         }
-        return expandedArtwork(source)
+        return expandedArtwork(source, height)
     }
 
     /** Preserve approved rim pixels, remove sample metadata before drawing live views.
@@ -147,19 +150,22 @@ internal object V5Artwork {
 
     @RequiresApi(Build.VERSION_CODES.S)
     fun bind(context: Context, views: RemoteViews, widthDp: Float, hasMedia: Boolean, connected: Boolean,
-             active: Boolean = true, enabledMask: Int = 7, palette: ArtworkColors.Palette? = null) {
-        val scale = widthDp * context.resources.displayMetrics.density / 1030f
+             active: Boolean = true, enabledMask: Int = 7, palette: ArtworkColors.Palette? = null,
+             heightDp: Float = widthDp * 225f / 1030f, canvasWidth: Float = WidgetSizing.CANVAS_WIDTH) {
+        val scale = widthDp * context.resources.displayMetrics.density / canvasWidth
+        val rowHeight = kotlin.math.round(heightDp * canvasWidth / widthDp).toInt().coerceIn(225, WidgetSizing.MAX_ROW_HEIGHT)
+        val verticalScale = scale
         fun size(id: Int, width: Float, height: Float) {
             views.setViewLayoutWidth(id, width * scale, TypedValue.COMPLEX_UNIT_PX)
-            views.setViewLayoutHeight(id, height * scale, TypedValue.COMPLEX_UNIT_PX)
+            views.setViewLayoutHeight(id, height * verticalScale, TypedValue.COMPLEX_UNIT_PX)
         }
         fun place(id: Int, x: Float, y: Float, width: Float, height: Float) {
             size(id, width, height)
             views.setViewLayoutMargin(id, RemoteViews.MARGIN_LEFT, x * scale, TypedValue.COMPLEX_UNIT_PX)
-            views.setViewLayoutMargin(id, RemoteViews.MARGIN_TOP, y * scale, TypedValue.COMPLEX_UNIT_PX)
+            views.setViewLayoutMargin(id, RemoteViews.MARGIN_TOP, y * verticalScale, TypedValue.COMPLEX_UNIT_PX)
         }
-        listOf(R.id.glass_surface, R.id.idle_state, R.id.media_state).forEach { size(it, 1030f, 225f) }
-        val base = if (hasMedia) playbackSurface(context, active, enabledMask) else idle(context, connected)
+        listOf(R.id.glass_surface, R.id.idle_state, R.id.media_state).forEach { size(it, 1030f, rowHeight.toFloat()) }
+        val base = rowSurface(context, rowHeight, hasMedia, active, enabledMask)
         views.setImageViewBitmap(R.id.glass_surface, if (hasMedia && palette != null)
             ArtworkColors.glass(base, palette, (enabledMask and 7) or (if (active) 8 else 0)) else base)
         views.setTextColor(R.id.track_artist, palette?.caption ?: 0xff9897ff.toInt())
@@ -167,36 +173,142 @@ internal object V5Artwork {
             palette?.let { android.content.res.ColorStateList.valueOf(it.accent) })
         views.setColorStateList(R.id.progress_bar, "setProgressBackgroundTintList",
             palette?.let { android.content.res.ColorStateList.valueOf((it.accent and 0x00ffffff) or 0x50000000) })
-        place(R.id.idle_title, 310f, 80f, 390f, 40f)
-        place(R.id.idle_subtitle, 310f, 125f, 390f, 40f)
-        place(R.id.btn_open, 722f, 54f, 260f, 117f)
+        place(R.id.idle_title, 298f, rowHeight / 2f - 42f, 410f, 44f)
+        place(R.id.idle_subtitle, 298f, rowHeight / 2f + 5f, 410f, 40f)
+        place(R.id.btn_open, 740f, rowHeight / 2f - 48f, 240f, 96f)
         for (id in listOf(R.id.idle_title, R.id.idle_subtitle, R.id.btn_open)) {
-            views.setTextColor(id, if (connected) Color.TRANSPARENT else Color.WHITE)
+            views.setTextColor(id, Color.WHITE)
         }
         if (!connected) {
             views.setTextColor(R.id.idle_subtitle,0xff87b5ff.toInt())
         }
-        views.setViewPadding(R.id.btn_open,0,if (connected) 0 else (10*scale).toInt(),0,0)
-        place(R.id.album_art, 0f, 0f, 307f, 225f)
-        place(R.id.text_info, 314f, 49f, 325f, 84f)
-        place(R.id.title_container, 0f, 0f, 325f, 42f)
-        place(R.id.track_artist, 0f, 42f, 325f, 42f)
-        place(R.id.btn_prev, 650f, 40f, 102f, 104f)
-        place(R.id.btn_play, 754f, 32f, 121f, 114f)
-        place(R.id.btn_next, 877f, 41f, 94f, 103f)
-        place(R.id.progress_container, 314f, 148f, 650f, 57f)
-        size(R.id.progress_bar, 650f, 11f)
-        size(R.id.time_row, 650f, 37f)
-        views.setViewLayoutMargin(R.id.time_row, RemoteViews.MARGIN_TOP, 13.7f * scale, TypedValue.COMPLEX_UNIT_PX)
-        views.setTextViewTextSize(R.id.track_title, TypedValue.COMPLEX_UNIT_PX, 32f * scale)
-        views.setTextViewTextSize(R.id.track_artist, TypedValue.COMPLEX_UNIT_PX, 24.5f * scale)
-        views.setTextViewTextSize(R.id.elapsed_time, TypedValue.COMPLEX_UNIT_PX, 19.5f * scale)
-        views.setTextViewTextSize(R.id.remaining_time, TypedValue.COMPLEX_UNIT_PX, 19.5f * scale)
-        views.setTextViewTextSize(R.id.idle_title, TypedValue.COMPLEX_UNIT_PX, 32f * scale)
-        views.setTextViewTextSize(R.id.idle_subtitle, TypedValue.COMPLEX_UNIT_PX, 25f * scale)
-        views.setTextViewTextSize(R.id.btn_open, TypedValue.COMPLEX_UNIT_PX, 27f * scale)
+        views.setViewPadding(R.id.btn_open,0,0,0,0)
+        place(R.id.album_art, 0f, 0f, 307f, rowHeight.toFloat())
+        place(R.id.text_info, RowLayout.CONTENT_LEFT, rowHeight * .20f, RowLayout.TITLE_WIDTH, 90f)
+        place(R.id.title_container, 0f, 0f, RowLayout.TITLE_WIDTH, 44f)
+        place(R.id.track_artist, 0f, 46f, RowLayout.TITLE_WIDTH, 40f)
+        listOf(R.id.btn_prev, R.id.btn_play, R.id.btn_next).zip(RowLayout.controls(rowHeight.toFloat())).forEach { (id, box) ->
+            place(id, box.x, box.y, box.width, box.height)
+        }
+        place(R.id.progress_container, RowLayout.CONTENT_LEFT, rowHeight - 73f, RowLayout.PROGRESS_WIDTH, 61f)
+        size(R.id.progress_bar, RowLayout.PROGRESS_WIDTH, 11f)
+        size(R.id.time_row, RowLayout.PROGRESS_WIDTH, 37f)
+        // The rim curves inward at the timestamps' baseline. Keep the remaining
+        // label inside that curve without shortening the progress track.
+        views.setViewPadding(R.id.time_row, 0, 0, kotlin.math.round(24f * scale).toInt(), 0)
+        views.setViewLayoutMargin(R.id.time_row, RemoteViews.MARGIN_TOP, 12f * scale, TypedValue.COMPLEX_UNIT_PX)
+        // The stable nested title owns its text and size. Parent-level title
+        // actions are replayed with progress updates and disturb its animation.
+        views.setTextViewTextSize(R.id.track_artist, TypedValue.COMPLEX_UNIT_PX, 26f * scale)
+        views.setTextViewTextSize(R.id.elapsed_time, TypedValue.COMPLEX_UNIT_PX, 21f * scale)
+        views.setTextViewTextSize(R.id.remaining_time, TypedValue.COMPLEX_UNIT_PX, 21f * scale)
+        views.setTextViewTextSize(R.id.idle_title, TypedValue.COMPLEX_UNIT_PX, 34f * scale)
+        views.setTextViewTextSize(R.id.idle_subtitle, TypedValue.COMPLEX_UNIT_PX, 26f * scale)
+        views.setTextViewTextSize(R.id.btn_open, TypedValue.COMPLEX_UNIT_PX, 29f * scale)
         // Visuals share one scaling operation; these remain independent live hit targets.
         for (id in listOf(R.id.btn_prev,R.id.btn_play,R.id.btn_next)) views.setImageViewResource(id,0)
+    }
+
+    private fun rowSurface(context: Context, height: Int, media: Boolean, active: Boolean, enabledMask: Int): Bitmap {
+        val key = "$height:$media:$active:$enabledMask"
+        rowSurfaces.get(key)?.let { return it }
+        // Resize only the glass shell. Composite controls afterward with uniform
+        // scaling so the extra row height never stretches their circles or glyphs.
+        val shell = playing(context).copy(Bitmap.Config.ARGB_8888, true)
+        // Soften the old raster repairs before relocating controls. Blend only
+        // the interior; the original rim and outer transparency remain exact.
+        val stride = shell.width + 1
+        val sums = Array(3) { LongArray(stride * (shell.height + 1)) }
+        for (y in 0 until shell.height) for (x in 0 until shell.width) {
+            val color = shell.getPixel(x, y)
+            val values = intArrayOf(Color.red(color), Color.green(color), Color.blue(color))
+            val i = (y + 1) * stride + x + 1
+            for (c in 0..2) sums[c][i] = values[c] + sums[c][i - 1] + sums[c][i - stride] - sums[c][i - stride - 1]
+        }
+        for (y in 25 until 205) for (x in 300 until 990) {
+            val blend = minOf(1f, (x - 300) / 24f, (990 - x) / 24f, (y - 25) / 20f, (205 - y) / 20f)
+            val x0 = x - 18; val x1 = minOf(shell.width, x + 19)
+            val y0 = maxOf(0, y - 18); val y1 = minOf(shell.height, y + 19)
+            val color = shell.getPixel(x, y)
+            val original = intArrayOf(Color.red(color), Color.green(color), Color.blue(color))
+            val channels = IntArray(3) { c ->
+                val sum = sums[c][y1 * stride + x1] - sums[c][y0 * stride + x1] -
+                    sums[c][y1 * stride + x0] + sums[c][y0 * stride + x0]
+                (original[c] * (1 - blend) + sum.toFloat() / ((x1 - x0) * (y1 - y0)) * blend).toInt().coerceIn(0, 255)
+            }
+            shell.setPixel(x, y, Color.rgb(channels[0], channels[1], channels[2]))
+        }
+        applySilhouette(shell, playing = true)
+        val result = Bitmap.createBitmap(1030, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        canvas.drawBitmap(shell, null, RectF(0f, 0f, 1030f, height.toFloat()), paint)
+        shell.recycle()
+        fun draw(image: Bitmap, box: RowLayout.Box, enabled: Boolean = true) {
+            val factor = minOf(box.width / image.width, box.height / image.height)
+            val w = image.width * factor
+            val h = image.height * factor
+            val left = box.x + (box.width - w) / 2f
+            val top = box.y + (box.height - h) / 2f
+            paint.alpha = if (enabled) 255 else 80
+            canvas.drawBitmap(image, null, RectF(left, top, left + w, top + h), paint)
+        }
+        if (media) {
+            val boxes = RowLayout.controls(height.toFloat())
+            draw(rowButton(context, 0, active), boxes[0], enabledMask and 1 != 0)
+            draw(rowButton(context, 1, active), boxes[1], enabledMask and 2 != 0)
+            draw(rowButton(context, 2, active), boxes[2], enabledMask and 4 != 0)
+        } else {
+            paint.alpha = 255
+            paint.shader = LinearGradient(60f, 40f, 230f, height - 35f,
+                0xaa8abaff.toInt(), 0x997b48d0.toInt(), Shader.TileMode.CLAMP)
+            canvas.drawCircle(155f, height / 2f, 83f, paint)
+            paint.shader = null
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 2f
+            paint.color = 0xffadbeff.toInt()
+            canvas.drawCircle(155f, height / 2f, 83f, paint)
+            paint.style = Paint.Style.FILL
+            context.getDrawable(R.drawable.ic_widget_music)?.mutate()?.let {
+                it.setTint(Color.WHITE)
+                it.setBounds(112, height / 2 - 43, 198, height / 2 + 43)
+                it.draw(canvas)
+            }
+            paint.color = 0x776b6dcd
+            canvas.drawRoundRect(RectF(740f, height / 2f - 48f, 980f, height / 2f + 48f), 48f, 48f, paint)
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 2f
+            paint.color = 0xffb9a2fa.toInt()
+            canvas.drawRoundRect(RectF(740f, height / 2f - 48f, 980f, height / 2f + 48f), 48f, 48f, paint)
+        }
+        rowSurfaces.put(key, result)
+        return result
+    }
+
+    private fun rowButton(context: Context, index: Int, active: Boolean): Bitmap {
+        val key = if (index == 1 && !active) 3 else index
+        return rowButtons.getOrPut(key) {
+            val source = when (index) {
+                0 -> asset(context, R.drawable.v5_playing_previous_button)
+                1 -> transport(context, active)
+                else -> asset(context, R.drawable.v5_playing_next_button)
+            }
+            val cx = if (index == 1) 61f else if (index == 0) 48f else 53f
+            val cy = if (index == 1) 61f else if (index == 0) 53f else 52f
+            val radius = if (index == 1) 48f else 39f
+            val extent = kotlin.math.ceil(radius + 3f).toInt()
+            val output = Bitmap.createBitmap(extent * 2, extent * 2, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(output)
+            canvas.drawBitmap(source, extent - cx, extent - cy, Paint(Paint.FILTER_BITMAP_FLAG))
+            val mask = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = RadialGradient(extent.toFloat(), extent.toFloat(), extent.toFloat(),
+                    intArrayOf(Color.WHITE, Color.WHITE, Color.TRANSPARENT),
+                    floatArrayOf(0f, radius / extent, 1f), Shader.TileMode.CLAMP)
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+            }
+            canvas.drawRect(0f, 0f, output.width.toFloat(), output.height.toFloat(), mask)
+            output
+        }
     }
 
     internal fun playbackSurface(context: Context, active: Boolean, enabledMask: Int): Bitmap {
@@ -239,27 +351,29 @@ internal object V5Artwork {
     /** Crop uniformly to cover both the square visible area and its fade continuation.
      * Keeping actual adjacent image pixels avoids synthesizing horizontal edge streaks.
      */
-    fun expandedArtwork(source: Bitmap): Bitmap {
-        if(expandedSource.get() === source && expandedGeneration == source.generationId) return expandedCover!!
-        val bitmap=Bitmap.createBitmap(307,225,Bitmap.Config.ARGB_8888)
+    fun expandedArtwork(source: Bitmap, height: Int = 225): Bitmap {
+        if(expandedSource.get() === source && expandedGeneration == source.generationId && expandedHeight == height) return expandedCover!!
+        val bitmap=Bitmap.createBitmap(307,height,Bitmap.Config.ARGB_8888)
         val canvas=Canvas(bitmap)
-        val scale=maxOf(307f/source.width,225f/source.height)
+        val scale=maxOf(307f/source.width,height.toFloat()/source.height)
         val shader=BitmapShader(source,Shader.TileMode.CLAMP,Shader.TileMode.CLAMP).apply {
             setLocalMatrix(Matrix().apply {
                 setScale(scale,scale)
-                postTranslate((307-source.width*scale)/2f,(225-source.height*scale)/2f)
+                postTranslate((307-source.width*scale)/2f,(height-source.height*scale)/2f)
             })
         }
         val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { this.shader=shader }
         // The raster rim has 80px corners, not a capsule's half-height radius.
         // Keep only the thin rim inset; a larger radius exposes a crescent of glass.
-        canvas.clipPath(Path().apply { addRoundRect(RectF(14f,5f,1015f,220f),80f,80f,Path.Direction.CW) })
-        canvas.drawRect(0f,0f,307f,225f,paint)
+        val ratio = height / 225f
+        canvas.clipPath(Path().apply { addRoundRect(RectF(14f,5f * ratio,1015f,height - 5f * ratio),80f,80f * ratio,Path.Direction.CW) })
+        canvas.drawRect(0f,0f,307f,height.toFloat(),paint)
         paint.shader=LinearGradient(215f,0f,307f,0f,Color.WHITE,Color.TRANSPARENT,Shader.TileMode.CLAMP)
         paint.xfermode=PorterDuffXfermode(PorterDuff.Mode.DST_IN)
-        canvas.drawRect(0f,0f,307f,225f,paint)
+        canvas.drawRect(0f,0f,307f,height.toFloat(),paint)
         expandedSource=java.lang.ref.WeakReference(source)
         expandedGeneration=source.generationId
+        expandedHeight=height
         expandedCover=bitmap
         return bitmap
     }

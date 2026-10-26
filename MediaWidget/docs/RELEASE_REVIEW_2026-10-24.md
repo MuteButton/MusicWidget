@@ -4,6 +4,29 @@ Reviewed October 24, 2026. **Recommendation: continue controlled testing; hold u
 
 ## Findings by priority
 
+### UI checkpoint update — October 26, 2026
+
+The findings below describe the October 24 candidate, not the current preview8
+layout. The current glass layout uses precise launcher dimensions, larger circular
+controls, live idle captions, and an inset remaining-time label. At a 374dp
+canvas width, Previous/Next are about 39.8dp square and Play is 47.1dp square
+before launcher scaling. This improves the layout but **does not close the 48dp
+touch-target finding**. Text still uses density-based sizing; system font scaling
+and TalkBack verification remain open.
+
+Preview7 passed 41 signed-APK core emulator checks and 13 marquee checks, plus
+17 JVM tests and release lint. Preview8 adds only timestamp-row right padding;
+its signed build and actual Samsung rendering/hash were verified. The complete
+emulator suite was not rerun for that padding-only revision. Physical Samsung
+canvas, clipping, artwork, control separation, and timestamp clearance were
+inspected. This is not a new unrestricted public-release sign-off.
+
+Private captures, test-player data, APKs, and signing material remain outside the
+commit. Battery architecture is unchanged at this UI checkpoint: progress still
+uses app-side one-second updates while playing with the screen unlocked.
+
+### Original review findings
+
 1. **High: full glass touch targets are too small.** `V5Artwork.kt:173-175` scales the live controls with the 1030-unit artwork. At 374dp widget width, Previous is 37.0 x 37.8dp, Play is 43.9 x 41.4dp, and Next is 34.1 x 37.4dp. Android recommends at least 48 x 48dp. Expanding these adjacent rectangles without repositioning them would overlap targets. Adjust the layout or provide an accessible alternative, and verify actual launcher hit bounds and TalkBack navigation. Compact playback buttons already use 48dp, but that layout cannot be independently selected at full width.
 2. **High: full glass text ignores system font scaling.** `V5Artwork.kt:180-186` and `WidgetRenderer.kt`'s `bindTitle` set pixel text sizes using display density only. At 374dp width, title/artist/timestamps are approximately 11.6/8.9/7.1dp. Connected idle captions are rasterized, with transparent live text. A large-font test checking only overlap does not establish readable enlarged text. Add responsive text/layout behavior or an accessible layout choice, then verify 100%, 150%, and 200% font scale, contrast, and screen-reader order. Compact/legacy timestamp lint warnings also remain relevant.
 3. **High release gate: supported-device coverage is incomplete.** The current signed-APK integration suite uses API 36 and a separate deterministic media player. Historical API 24/31/36 CI jobs cover three setup/configuration smoke tests, not full playback integration. Physical Samsung/One UI battery restrictions, overnight behavior, and broad real-player interoperability remain unverified. Test the final candidate on representative physical hardware and the minimum supported API, recording APK hash, launcher, OS, media app, screen-off/reboot recovery, session changes, and resize results.

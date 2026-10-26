@@ -58,7 +58,7 @@ internal object ArtworkColors {
     }
 
     fun glass(base: Bitmap, palette: Palette, stateKey: Int): Bitmap {
-        val key = "$stateKey:${palette.hue}:${palette.saturation}"
+        val key = "${base.generationId}:$stateKey:${palette.hue}:${palette.saturation}"
         surfaces.get(key)?.let { return it }
         val pixels = IntArray(base.width * base.height)
         base.getPixels(pixels, 0, base.width, 0, 0, base.width, base.height)

@@ -53,10 +53,13 @@ function Glyph-Count([string]$Path) {
     } finally {$bitmap.Dispose()}
 }
 Fixture 'play'
+$timeBefore=(Find-Node (Read-Ui) 'elapsed_time').text
 Fixture 'metadata' @('--es','title',(('.' * 150) + ('W' * 45)))
 Start-Sleep -Seconds 2
 $prefix=Title-Capture '00-playing-prefix'
-$timeBefore=(Find-Node (Read-Ui) 'elapsed_time').text
+# UI hierarchy instrumentation can consume several seconds on a loaded emulator.
+# Keep it outside the animation capture window so the suffix is sampled before
+# the intentional 17-second restoration, rather than testing the restored prefix.
 Start-Sleep -Seconds 7
 $suffix=Title-Capture '00-playing-suffix'
 $prefixCount=Glyph-Count $prefix

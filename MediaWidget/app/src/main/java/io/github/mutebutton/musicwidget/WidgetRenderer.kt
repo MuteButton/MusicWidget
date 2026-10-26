@@ -95,15 +95,28 @@ internal object WidgetRenderer {
     private fun layout(context: Context, id: Int) = if (v5(context, id)) R.layout.widget_media_v5
         else if (compact(context, id)) R.layout.widget_media_compact else R.layout.widget_media_control
 
-    /** Preserve the original pill proportions within the space supplied by the host. */
-    private fun pillWidth(context: Context, id: Int): Float {
+    /** Prefer the precise canvas supplied by modern launchers over truncated dp. */
+    @Suppress("DEPRECATION")
+    private fun hostCanvas(context: Context, id: Int): android.util.SizeF {
         val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val options = AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
         val width = options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH
             else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 374).coerceAtLeast(1).toFloat()
         val height = options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT
             else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 96).coerceAtLeast(1).toFloat()
-        return WidgetSizing.pillWidth(width, height)
+        if (Build.VERSION.SDK_INT >= 31) {
+            val exact = options.getParcelableArrayList<android.util.SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+                ?.filter { it.width.isFinite() && it.height.isFinite() && it.width > 0 && it.height > 0 }
+                ?.minByOrNull { kotlin.math.abs(it.width - width) + kotlin.math.abs(it.height - height) }
+            // Match the current orientation; do not pick an unrelated fold/display size.
+            if (exact != null && kotlin.math.abs(exact.width - width) < 2f &&
+                kotlin.math.abs(exact.height - height) < 2f) return exact
+        }
+        return android.util.SizeF(width, height)
+    }
+
+    private fun pillWidth(context: Context, id: Int): Float = hostCanvas(context, id).let {
+        WidgetSizing.pillWidth(it.width, it.height)
     }
 
     fun renderAll(context: Context, controller: MediaController?) {
@@ -165,7 +178,10 @@ internal object WidgetRenderer {
                 (if(actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L)4 else 0)
             val palette = if (context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                     .getBoolean(ArtworkColors.PREFERENCE, true)) ArtworkColors.from(controller?.let { rawAlbumArt(it) }) else null
-            V5Artwork.bind(context, views, widthOverride ?: widthDp.toFloat(), hasMedia, hasAccess(context),isPlaybackActive(state),enabledMask,palette)
+            val hostHeight = hostCanvas(context, id).height
+            val height = if (widthOverride != null) widthOverride * 225f / 1030f
+                else WidgetSizing.pillHeight(widthDp, hostHeight)
+            V5Artwork.bind(context, views, widthOverride ?: widthDp.toFloat(), hasMedia, hasAccess(context),isPlaybackActive(state),enabledMask,palette,height, if (widthOverride != null) 1030f else WidgetSizing.CANVAS_WIDTH)
         } else if (!compact(context, id)) {
             val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             val widthDp = manager.getAppWidgetOptions(id).getInt(
@@ -200,13 +216,14 @@ internal object WidgetRenderer {
                 ?: description?.subtitle?.toString()?.takeIf { it.isNotBlank() } ?: appLabel(context, controller.packageName)
             if (!preserveTitle) {
                 if (v5(context, id)) bindTitle(context, views, id, controller, title, false, widthOverride)
-                views.setTextViewText(R.id.track_title, title)
+                else views.setTextViewText(R.id.track_title, title)
             }
             views.setTextViewText(R.id.track_artist, artist)
             views.setContentDescription(R.id.album_art, context.getString(R.string.open_current_track, title))
-            val displayArt = if (v5(context, id)) rawAlbumArt(controller)?.let { V5Artwork.expandedArtwork(it) } else artwork
+            val rowHeight = rowHeight(context, id, widthOverride)
+            val displayArt = if (v5(context, id)) rawAlbumArt(controller)?.let { V5Artwork.expandedArtwork(it, rowHeight) } else artwork
             if (displayArt != null) views.setImageViewBitmap(R.id.album_art, displayArt)
-            else if (v5(context, id)) views.setImageViewBitmap(R.id.album_art, V5Artwork.placeholder(context))
+            else if (v5(context, id)) views.setImageViewBitmap(R.id.album_art, V5Artwork.placeholder(context, rowHeight))
             else views.setImageViewResource(R.id.album_art, R.drawable.ic_album_placeholder)
             val playing = isPlaybackActive(controller.playbackState)
             if (!v5(context, id)) views.setImageViewResource(R.id.btn_play, if (playing) R.drawable.ic_pause else R.drawable.ic_play)
@@ -238,6 +255,13 @@ internal object WidgetRenderer {
         context.getSystemService(android.os.PowerManager::class.java).isInteractive &&
             !context.getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked
 
+    private fun rowHeight(context: Context, id: Int, widthOverride: Float?): Int {
+        if (widthOverride != null) return 225
+        val height = hostCanvas(context, id).height
+        val width = pillWidth(context, id)
+        return kotlin.math.round(WidgetSizing.pillHeight(width, height) * WidgetSizing.CANVAS_WIDTH / width).toInt().coerceIn(225, WidgetSizing.MAX_ROW_HEIGHT)
+    }
+
     private fun bindTitle(context: Context, views: RemoteViews, id: Int, controller: MediaController,
                           title: String, scroll: Boolean, widthOverride: Float? = null) {
         if (Build.VERSION.SDK_INT < 31) return // Legacy layouts have no nested title.
@@ -247,10 +271,10 @@ internal object WidgetRenderer {
             if (scroll) R.layout.widget_title_marquee else R.layout.widget_title_static)
         label.setTextViewText(R.id.track_title, title)
         label.setTextViewTextSize(R.id.track_title, android.util.TypedValue.COMPLEX_UNIT_PX,
-            32f * width * context.resources.displayMetrics.density / 1030f)
+            RowLayout.TITLE_SIZE * width * context.resources.displayMetrics.density / (if (widthOverride != null) 1030f else WidgetSizing.CANVAS_WIDTH))
         if (scroll) {
             val paint = android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                textSize = 32f * width * context.resources.displayMetrics.density / 1030f
+                textSize = RowLayout.TITLE_SIZE * width * context.resources.displayMetrics.density / (if (widthOverride != null) 1030f else WidgetSizing.CANVAS_WIDTH)
                 textScaleX = 1.02f
                 typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
             }
@@ -280,14 +304,14 @@ internal object WidgetRenderer {
         val landscape = app.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val widthDp = pillWidth(app, id)
         val density = app.resources.displayMetrics.density
-        val scale = widthDp * density / 1030f
+        val scale = widthDp * density / WidgetSizing.CANVAS_WIDTH
         val paint = android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = 32f * scale
+            textSize = RowLayout.TITLE_SIZE * scale
             textScaleX = 1.02f
             typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
         }
         val lineWidth = android.text.Layout.getDesiredWidth(title.replace('\n', ' '), paint)
-        val viewport = 325f * scale
+        val viewport = RowLayout.TITLE_WIDTH * scale
         titleTasks.remove(id)?.let { titleHandler.removeCallbacks(it) }
         fun display(scroll: Boolean) {
             val views = RemoteViews(app.packageName, R.layout.widget_media_v5)
