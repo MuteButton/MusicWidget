@@ -4,8 +4,8 @@ param(
     [string]$Bundletool='artifacts/tooling/bundletool-1.18.3.jar',
     [string]$OutputDirectory='artifacts/oncue-release/upgrade-backup'
 )
-. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.musicwidget.testplayer'
-$package='io.github.mutebutton.musicwidget'
+. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.oncue.testplayer'
+$package='io.github.mutebutton.oncue'
 $java=if($env:JAVA_HOME){Join-Path $env:JAVA_HOME 'bin/java.exe'}else{'C:/Program Files/Android/Android Studio/jbr/bin/java.exe'}
 function Setup {
     Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$package/.MainActivity") | Out-Null

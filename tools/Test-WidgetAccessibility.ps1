@@ -1,7 +1,7 @@
 param([string]$OutputDirectory='artifacts/accessibility-conservative/edges')
 # Set ANDROID_SERIAL to the prepared test emulator before running.
-. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -AppPackage io.github.mutebutton.oncue -FixturePackage io.github.mutebutton.musicwidget.testplayer
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
+. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -AppPackage io.github.mutebutton.oncue -FixturePackage io.github.mutebutton.oncue.testplayer
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 Show-WidgetPage
 Assert-Eventually { (Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow' } 'Fixture is selected before edge testing'

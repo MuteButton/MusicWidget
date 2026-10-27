@@ -1,4 +1,4 @@
-package io.github.mutebutton.musicwidget.uiprobe;
+package io.github.mutebutton.oncue.uiprobe;
 
 import android.app.Instrumentation;
 import android.accessibilityservice.AccessibilityServiceInfo;

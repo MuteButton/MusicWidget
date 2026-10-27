@@ -5,7 +5,7 @@ param(
     [string]$AppPackage='io.github.mutebutton.oncue'
 )
 # Dedicated, already configured emulator only. Uses the actual signed release.
-. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -AppPackage $AppPackage -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.musicwidget.testplayer'
+. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -AppPackage $AppPackage -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.oncue.testplayer'
 $package=$AppPackage
 if((Invoke-Adb @('shell','getprop','ro.kernel.qemu')).Trim() -ne '1'){throw 'This test is restricted to an emulator'}
 if($Cycles -lt 1 -or $Cycles -gt 10){throw 'Cycles must be between 1 and 10'}
@@ -84,7 +84,7 @@ function CheckLive([string]$Label) {
     Assert-Eventually { (State).playing } "$Label resumes playback"
 }
 try {
-    Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
     Home
     CheckLive 'Baseline'
     Memory 'warm'
@@ -137,7 +137,7 @@ try {
     $afterStop=(& $Adb shell pidof $package) -join ''
     Assert-True ($afterStop.Trim() -ne $beforeStop) 'Force-stop terminates the original app process'
     Invoke-Adb @('shell','dumpsys','package',$package) | Set-Content (Join-Path $OutputDirectory 'after-force-stop-package.txt')
-    Invoke-Adb @('shell','am','start','-W','-n',"$package/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n',"$package/io.github.mutebutton.oncue.MainActivity") | Out-Null
     Home
     Fixture 'next'
     CheckLive 'Explicit reopen after force-stop'

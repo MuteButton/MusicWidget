@@ -2,7 +2,7 @@
 
 Verified October 24, 2026 on the API 36.1 emulator.
 
-The application ID is `io.github.mutebutton.oncue` (version 1.2, code 3). The release signing certificate SHA-256 remains `35162d5dd3ff1b970a23bd5cf0cbb0fa90df265a44babf6dc722ad39e3a70f15`, matching the certificate registered in Android Developer Console. Earlier `io.github.mutebutton.musicwidget` builds install separately; settings and notification access do not migrate.
+The application ID is `io.github.mutebutton.oncue` (version 1.2, code 3). The release signing certificate SHA-256 remains `35162d5dd3ff1b970a23bd5cf0cbb0fa90df265a44babf6dc722ad39e3a70f15`, matching the certificate registered in Android Developer Console. Earlier `io.github.mutebutton.oncue` builds install separately; settings and notification access do not migrate.
 
 ## Transparency correction
 

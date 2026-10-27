@@ -78,11 +78,11 @@ Install the signed release and `tools/test-player/build/outputs/apk/debug/test-p
 
 ```powershell
 .\tools\Test-ReleaseApk.ps1 -Apk artifacts/oncue-release/OnCue-1.2.apk
-.\tools\Test-WidgetMarquee.ps1 -FixturePackage io.github.mutebutton.musicwidget.testplayer
-adb shell am force-stop io.github.mutebutton.musicwidget.testplayer
+.\tools\Test-WidgetMarquee.ps1 -FixturePackage io.github.mutebutton.oncue.testplayer
+adb shell am force-stop io.github.mutebutton.oncue.testplayer
 .\tools\Test-RealChrome.ps1 -ReleaseApk
 .\tools\Test-BrowserUrl.ps1 -ReleaseApk
-.\tools\Test-WidgetResponsiveness.ps1 -FixturePackage io.github.mutebutton.musicwidget.testplayer
+.\tools\Test-WidgetResponsiveness.ps1 -FixturePackage io.github.mutebutton.oncue.testplayer
 .\tools\Test-ReleaseStress.ps1
 .\tools\Test-RepositoryHygiene.ps1
 ```
@@ -104,3 +104,10 @@ Run `tools/Test-ReleaseBackground.ps1` from the repository root using its full `
 See [current limitations](KNOWN_LIMITATIONS.md) for battery behavior, accessibility gaps and verification scope.
 
 For VS Code, open OnCue.code-workspace at the repository root to display the project as OnCue and exclude local artifacts from Java discovery.
+
+## Component naming in 2.0.1
+
+Internal app, fixture and probe packages now use `io.github.mutebutton.oncue`.
+The registered application ID and signing key are unchanged. Updating from 2.0
+requires removing/re-adding existing widgets and enabling notification access for
+the renamed listener. Historical 2.0 release assets are unchanged.

@@ -22,11 +22,11 @@ if(@($devices -split "`n" | Where-Object {$_ -match '^emulator-\d+\s+device'}).C
     throw 'Connect exactly one running Android emulator and no other ADB devices.'
 }
 $apk=Join-Path $repo 'app/build/outputs/apk/debug/app-debug.apk'
-$remote=((Adb-Run @('shell','pm','path','io.github.mutebutton.musicwidget')) -split "`n" | Where-Object {$_ -like 'package:*/base.apk'} | Select-Object -First 1)
+$remote=((Adb-Run @('shell','pm','path','io.github.mutebutton.oncue')) -split "`n" | Where-Object {$_ -like 'package:*/base.apk'} | Select-Object -First 1)
 if(-not $remote){throw 'Install the debug APK first.'}
 $installed=(Adb-Run @('shell','sha256sum',$remote.Substring(8).Trim())).Split(' ')[0]
 if($installed -ne (Get-FileHash $apk -Algorithm SHA256).Hash){throw 'Installed APK does not match the local debug build.'}
-if((Adb-Run @('shell','pm','path','io.github.mutebutton.musicwidget.uiprobe')) -notmatch 'package:'){throw 'Install the UI probe first (tools/ui-probe/Build-Probe.ps1).'}
+if((Adb-Run @('shell','pm','path','io.github.mutebutton.oncue.uiprobe')) -notmatch 'package:'){throw 'Install the UI probe first (tools/ui-probe/Build-Probe.ps1).'}
 $summary=[Collections.Generic.List[object]]::new()
 $context=[ordered]@{
     startedUtc=[DateTime]::UtcNow.ToString('o')
@@ -48,9 +48,9 @@ Get-ChildItem tools/*.ps1 | Get-FileHash -Algorithm SHA256 |
     Select-Object Path,Hash | ConvertTo-Json | Set-Content (Join-Path $OutputDirectory 'test-script-hashes.json')
 $font=(Adb-Run @('shell','settings','get','system','font_scale')).Trim()
 $listeners=(Adb-Run @('shell','settings','get','secure','enabled_notification_listeners')).Trim()
-$listener='io.github.mutebutton.musicwidget/.MediaListenerService'
-Adb-Run @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-Adb-Run @('shell','run-as','io.github.mutebutton.musicwidget','cp','shared_prefs/media_widget.xml','files/full-regression-prefs.xml') | Out-Null
+$listener='io.github.mutebutton.oncue/.MediaListenerService'
+Adb-Run @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
+Adb-Run @('shell','run-as','io.github.mutebutton.oncue','cp','shared_prefs/media_widget.xml','files/full-regression-prefs.xml') | Out-Null
 $stages=[ordered]@{
     core='Test-WidgetEmulator.ps1'
     lifecycle='Test-WidgetExtended.ps1'
@@ -78,8 +78,8 @@ try {
             Adb-Run @('shell','am','force-stop','com.android.chrome') | Out-Null
             Adb-Run @('shell','am','force-stop','com.google.android.youtube') | Out-Null
             # Each group gets a fresh service; an earlier group may have stopped it.
-            Adb-Run @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-            Adb-Run @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+            Adb-Run @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
+            Adb-Run @('shell','am','start','-W','-n','io.github.mutebutton.oncue/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
             Start-Sleep -Seconds 5
             & ([scriptblock]::Create((Get-Content (Join-Path $repo "tools/$($stage.Value)") -Raw))) -OutputDirectory $stageDirectory |
                 Tee-Object -FilePath (Join-Path $stageDirectory 'run.log')
@@ -92,11 +92,11 @@ try {
         $summary | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $OutputDirectory 'summary.json')
     }
 } finally {
-    Adb-Run @('shell','am','force-stop','io.github.mutebutton.musicwidget') | Out-Null
-    Adb-Run @('shell','run-as','io.github.mutebutton.musicwidget','cp','files/full-regression-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
+    Adb-Run @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
+    Adb-Run @('shell','run-as','io.github.mutebutton.oncue','cp','files/full-regression-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
     Adb-Run @('shell','settings','put','system','font_scale',$font) | Out-Null
-    if($listeners -notmatch 'io.github.mutebutton.musicwidget/') {Adb-Run @('shell','cmd','notification','disallow_listener',$listener) | Out-Null}
-    Adb-Run @('shell','am','start','-W','-n','io.github.mutebutton.musicwidget/.MainActivity') | Out-Null
+    if($listeners -notmatch 'io.github.mutebutton.oncue/') {Adb-Run @('shell','cmd','notification','disallow_listener',$listener) | Out-Null}
+    Adb-Run @('shell','am','start','-W','-n','io.github.mutebutton.oncue/.MainActivity') | Out-Null
 }
 $summary | Format-Table suite,status,checks,seconds -AutoSize
 Write-Output "Evidence: $OutputDirectory"

@@ -8,7 +8,7 @@ $buildTools = "$Sdk/build-tools/34.0.0"
 $env:JAVA_HOME = $Jdk
 & "$Jdk/bin/javac.exe" -source 8 -target 8 -bootclasspath $androidJar -d "$output/classes" "$probeRoot/UiProbe.java"
 if ($LASTEXITCODE -ne 0) { throw 'Probe Java compilation failed' }
-& "$buildTools/d8.bat" --lib $androidJar --output "$output/dex" "$output/classes/io/github/mutebutton/musicwidget/uiprobe/UiProbe.class"
+& "$buildTools/d8.bat" --lib $androidJar --output "$output/dex" "$output/classes/io/github/mutebutton/oncue/uiprobe/UiProbe.class"
 if ($LASTEXITCODE -ne 0) { throw 'Probe dex compilation failed' }
 & "$buildTools/aapt.exe" package -f -M "$probeRoot/AndroidManifest.xml" -I $androidJar -F "$output/probe-unsigned.apk"
 if ($LASTEXITCODE -ne 0) { throw 'Probe packaging failed' }

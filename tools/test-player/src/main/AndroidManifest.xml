@@ -3,8 +3,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <application android:label="Widget acceptance player" android:theme="@android:style/Theme.Material.NoActionBar">
-        <activity android:name="io.github.mutebutton.musicwidget.debug.DebugMediaActivity" android:exported="true" android:excludeFromRecents="true" />
-        <service android:name="io.github.mutebutton.musicwidget.debug.DebugMediaService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
-        <receiver android:name="io.github.mutebutton.musicwidget.debug.DebugMediaReceiver" android:exported="true" />
+        <activity android:name="io.github.mutebutton.oncue.debug.DebugMediaActivity" android:exported="true" android:excludeFromRecents="true" />
+        <service android:name="io.github.mutebutton.oncue.debug.DebugMediaService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+        <receiver android:name="io.github.mutebutton.oncue.debug.DebugMediaReceiver" android:exported="true" />
     </application>
 </manifest>

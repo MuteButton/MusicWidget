@@ -1,6 +1,6 @@
 # Public-identity release acceptance (initial signing)
 
-Music Widget 1.1, version code 2, `io.github.mutebutton.musicwidget`. Tested October 23, 2026. Minimum API 24; target/compile API 36. The shipping source was committed in `89f3170`; later commits refine test infrastructure and documentation without changing this APK.
+Music Widget 1.1, version code 2, `io.github.mutebutton.oncue`. Tested October 23, 2026. Minimum API 24; target/compile API 36. The shipping source was committed in `89f3170`; later commits refine test infrastructure and documentation without changing this APK.
 
 > **Historical signing evidence:** These results describe the initial certificate. The final public APK uses a new neutral MuteButton key; see [neutral signing acceptance](NEUTRAL_RELEASE_ACCEPTANCE.md).
 

@@ -12,10 +12,10 @@ def fixtureSources = tasks.register('prepareFixtureSources', Sync) {
 
 // Separate, debug-only driver: never a dependency of the shipping widget APK.
 android {
-    namespace 'io.github.mutebutton.musicwidget'
+    namespace 'io.github.mutebutton.oncue'
     compileSdk 36
     defaultConfig {
-        applicationId 'io.github.mutebutton.musicwidget.testplayer'
+        applicationId 'io.github.mutebutton.oncue.testplayer'
         minSdk 24
         targetSdk 34
         versionCode 1

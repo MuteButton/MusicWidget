@@ -4,11 +4,11 @@ function Home-Widget {
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
     Show-WidgetPage
 }
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','io.github.mutebutton.musicwidget/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n','io.github.mutebutton.oncue/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
 Fixture 'pause'
 Home-Widget
 Tap-Node 'track_artist'
-Wait-Activity 'ResumedActivity.*io.github.mutebutton.musicwidget/.debug.DebugMediaActivity' | Out-Null
+Wait-Activity 'ResumedActivity.*io.github.mutebutton.oncue/.debug.DebugMediaActivity' | Out-Null
 Assert-True ($null -ne (Read-Ui).SelectSingleNode("//node[contains(@text,'Media widget test player')]")) 'Artist tap opens the active media player'
 Home-Widget
 Fixture 'second-play'

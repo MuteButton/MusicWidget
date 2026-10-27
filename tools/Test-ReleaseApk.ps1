@@ -1,5 +1,5 @@
 param([Parameter(Mandatory=$true)][string]$Apk,[string]$OutputDirectory='artifacts/oncue-registered-release/acceptance',[string]$AppPackage='io.github.mutebutton.oncue')
-. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -AppPackage $AppPackage -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.musicwidget.testplayer'
+. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -AppPackage $AppPackage -OutputDirectory $OutputDirectory -FixturePackage 'io.github.mutebutton.oncue.testplayer'
 $localHash=(Get-FileHash $Apk -Algorithm SHA256).Hash
 $remote=(Invoke-Adb @('shell','pm','path',$AppPackage)).Trim().Substring(8)
 $installed=(Invoke-Adb @('shell','sha256sum',$remote)).Split(' ')[0]
@@ -13,13 +13,13 @@ function Tap-Text([string]$Text) {
     Invoke-Adb @('shell','input','tap',"$([int](($b[0]+$b[2])/2))","$([int](($b[1]+$b[3])/2))") | Out-Null
 }
 function Mode([string]$Name) {
-    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity") | Out-Null
     Tap-Node 'color_mode_button'; Tap-Text $Name
     Assert-Eventually { (Find-Node (Read-Ui) 'color_mode_button').text -eq "Colors: $Name" } "Release settings select $Name"
     Home
 }
-Invoke-Adb @('shell','cmd','notification','allow_listener',"$AppPackage/io.github.mutebutton.musicwidget.MediaListenerService") | Out-Null
-Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
+Invoke-Adb @('shell','cmd','notification','allow_listener',"$AppPackage/io.github.mutebutton.oncue.MediaListenerService") | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
 try {
     Home
     Assert-Eventually { (Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow' } 'Release receives external-player metadata'
@@ -70,23 +70,23 @@ try {
     Fixture 'pause'
     foreach($id in @('track_title','track_artist','album_art','progress_bar','elapsed_time','remaining_time')) {
         Tap-Node $id
-        $target=Wait-Activity 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity'
-        Assert-True ($target -match 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity') "Release $id opens external player destination"
+        $target=Wait-Activity 'ResumedActivity.*io.github.mutebutton.oncue.debug.DebugMediaActivity'
+        Assert-True ($target -match 'ResumedActivity.*io.github.mutebutton.oncue.debug.DebugMediaActivity') "Release $id opens external player destination"
         Home
     }
     # Hit empty pill space, not the artwork, text or transport overlays.
     $bounds=[regex]::Matches((Find-Node (Read-Ui) 'media_state').bounds,'\d+') | ForEach-Object {[int]$_.Value}
     Invoke-Adb @('shell','input','tap',"$([int](($bounds[0]+$bounds[2])/2))","$($bounds[1]+5)") | Out-Null
-    Assert-True ((Wait-Activity 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity') -match 'DebugMediaActivity') 'Blank pill space opens active player'
+    Assert-True ((Wait-Activity 'ResumedActivity.*io.github.mutebutton.oncue.debug.DebugMediaActivity') -match 'DebugMediaActivity') 'Blank pill space opens active player'
     Home
     # Exercise the fallback/previously cached idle action with a live session.
-    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity",'-a','io.github.mutebutton.musicwidget.OPEN_PLAYER') | Out-Null
-    Assert-True ((Wait-Activity 'ResumedActivity.*io.github.mutebutton.musicwidget.debug.DebugMediaActivity') -match 'DebugMediaActivity') 'Open-player fallback resolves the active media session'
+    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity",'-a','io.github.mutebutton.oncue.OPEN_PLAYER') | Out-Null
+    Assert-True ((Wait-Activity 'ResumedActivity.*io.github.mutebutton.oncue.debug.DebugMediaActivity') -match 'DebugMediaActivity') 'Open-player fallback resolves the active media session'
     Home
     Mode 'Classic glass'; Screenshot 'classic'
     Mode 'Artwork glass'; Screenshot 'adaptive'
     Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
-    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity") | Out-Null
     Assert-Eventually { (Find-Node (Read-Ui) 'color_mode_button').text -eq 'Colors: Artwork glass' } 'Release color preference survives restart'
     Home
     Assert-Eventually { (Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow' } 'Release restores media after app restart'
@@ -99,18 +99,18 @@ try {
     Invoke-Adb @('shell','wm','dismiss-keyguard') | Out-Null
     Home
     Assert-Eventually { (Find-Node (Read-Ui) 'btn_play').'content-desc' -eq 'Pause' } 'Release playback recovers after screen-off/wake'
-    Invoke-Adb @('shell','cmd','notification','disallow_listener',"$AppPackage/io.github.mutebutton.musicwidget.MediaListenerService") | Out-Null
+    Invoke-Adb @('shell','cmd','notification','disallow_listener',"$AppPackage/io.github.mutebutton.oncue.MediaListenerService") | Out-Null
     Assert-Eventually { (Find-Node (Read-Ui) 'btn_open').text -eq 'Connect' } 'Release exposes permission recovery'
     Tap-Node 'btn_open'
-    Assert-True ((Wait-Activity "ResumedActivity.*$AppPackage/io.github.mutebutton.musicwidget.MainActivity") -match 'MainActivity') 'Release Connect opens setup'
-    Invoke-Adb @('shell','cmd','notification','allow_listener',"$AppPackage/io.github.mutebutton.musicwidget.MediaListenerService") | Out-Null
+    Assert-True ((Wait-Activity "ResumedActivity.*$AppPackage/io.github.mutebutton.oncue.MainActivity") -match 'MainActivity') 'Release Connect opens setup'
+    Invoke-Adb @('shell','cmd','notification','allow_listener',"$AppPackage/io.github.mutebutton.oncue.MediaListenerService") | Out-Null
     Home
     Assert-Eventually { (Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow' } 'Release recovers after permission restoration'
     Fixture 'stop'
     Assert-Eventually { $null -ne (Find-Node (Read-Ui) 'idle_state') } 'Release returns to idle after final session stops'
     Screenshot 'idle'
 } finally {
-    Invoke-Adb @('shell','cmd','notification','allow_listener',"$AppPackage/io.github.mutebutton.musicwidget.MediaListenerService") | Out-Null
+    Invoke-Adb @('shell','cmd','notification','allow_listener',"$AppPackage/io.github.mutebutton.oncue.MediaListenerService") | Out-Null
     Invoke-Adb @('shell','am','force-stop',$FixturePackage) | Out-Null
     Invoke-Adb @('shell','input','keyevent','KEYCODE_WAKEUP') | Out-Null
     Invoke-Adb @('shell','wm','dismiss-keyguard') | Out-Null

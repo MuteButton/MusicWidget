@@ -10,15 +10,15 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace 'io.github.mutebutton.musicwidget'
+    namespace 'io.github.mutebutton.oncue'
     compileSdk 36
 
     defaultConfig {
         applicationId "io.github.mutebutton.oncue"
         minSdk 24
         targetSdk 36
-        versionCode 16
-        versionName "2.0"
+        versionCode 17
+        versionName "2.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

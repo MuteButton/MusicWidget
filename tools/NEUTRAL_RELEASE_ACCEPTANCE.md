@@ -2,7 +2,7 @@
 
 A subsequent [artwork rim correction](ARTWORK_RIM_ACCEPTANCE.md) provides an updated signed APK and refreshed README images. This report retains the original artifact hashes and results.
 
-Music Widget 1.1 (version code 2), `io.github.mutebutton.musicwidget`, October 23, 2026. Production code is unchanged from the public-identity build; this build replaces its prototype signing certificate with the owner-approved neutral MuteButton identity.
+Music Widget 1.1 (version code 2), `io.github.mutebutton.oncue`, October 23, 2026. Production code is unchanged from the public-identity build; this build replaces its prototype signing certificate with the owner-approved neutral MuteButton identity.
 
 ## Deliverables
 

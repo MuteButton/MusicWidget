@@ -10,10 +10,10 @@
 -keep class android.service.notification.NotificationListenerService { *; }
 
 # Keep notification listener service
--keep class com.example.mediawidget.MediaListenerService { *; }
+-keep class io.github.mutebutton.oncue.MediaListenerService { *; }
 
 # Keep widget provider
--keep class com.example.mediawidget.MediaWidgetProvider { *; }
+-keep class io.github.mutebutton.oncue.OnCueWidgetProvider { *; }
 
 # Keep RemoteViews reflection targets
 -keepclassmembers class * {

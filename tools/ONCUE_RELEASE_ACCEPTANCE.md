@@ -2,7 +2,7 @@
 
 Verified October 24, 2026 on the API 36.1 emulator. OnCue replaces the visible Music Widget name in the launcher/widget picker, setup, notification-access label, permission explanation, privacy policy, README and current release documentation. Version code increases from 2 to 3; version name is 1.2. Release filenames are `OnCue-1.2.apk` and `OnCue-1.2.aab`.
 
-The application ID remains `io.github.mutebutton.musicwidget`. The existing neutral MuteButton signing certificate is retained and was compared with the preceding signed release. The GitHub repository URL, internal source/resource identifiers, existing signing-backup folder and historical test reports retain their established names. This rename does not generate a new key or require uninstalling the neutral-signed 1.1 app.
+The application ID remains `io.github.mutebutton.oncue`. The existing neutral MuteButton signing certificate is retained and was compared with the preceding signed release. The GitHub repository URL, internal source/resource identifiers, existing signing-backup folder and historical test reports retain their established names. This rename does not generate a new key or require uninstalling the neutral-signed 1.1 app.
 
 ## Verification
 

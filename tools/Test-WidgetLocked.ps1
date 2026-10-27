@@ -1,11 +1,11 @@
 param([string]$OutputDirectory='artifacts/locked-widget-acceptance', [string]$AppPackage='io.github.mutebutton.oncue')
-. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -AppPackage $AppPackage -FixturePackage io.github.mutebutton.musicwidget.testplayer -OutputDirectory $OutputDirectory
+. ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -AppPackage $AppPackage -FixturePackage io.github.mutebutton.oncue.testplayer -OutputDirectory $OutputDirectory
 if((Invoke-Adb @('shell','getprop','ro.kernel.qemu')).Trim() -ne '1'){throw 'Emulator only'}
 $disabled=(Invoke-Adb @('shell','locksettings','get-disabled')).Trim()
 $stayAwake=(Invoke-Adb @('shell','settings','get','global','stay_on_while_plugged_in')).Trim()
 try {
  Invoke-Adb @('shell','settings','put','global','stay_on_while_plugged_in','7') | Out-Null
- Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
+ Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
  Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
  Show-WidgetPage
  $before=(Find-Node (Read-Ui) 'elapsed_time').text

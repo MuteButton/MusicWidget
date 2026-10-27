@@ -17,9 +17,9 @@ try {
     if($server.HasExited){throw 'Local server failed to start; check port 8765 and server-error.log'}
     Invoke-Adb @('reverse','tcp:8765','tcp:8765') | Out-Null
     # Release the runner's competing debug session before testing Chrome itself.
-    Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.musicwidget.testplayer') | Out-Null
+    Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.oncue.testplayer') | Out-Null
     Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
-    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity") | Out-Null
     Invoke-Adb @('shell','am','force-stop','com.android.chrome') | Out-Null
     Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.VIEW','-d','http://127.0.0.1:8765/player','-p','com.android.chrome') | Out-Null
     Assert-Eventually { $null -ne (Read-Ui).SelectSingleNode("//node[@text='Play test audio']") } 'Local Chrome media page loads (Chrome onboarding must already be complete)'
@@ -54,7 +54,7 @@ try {
     if($ReleaseApk) {
         # Shipping builds correctly disallow run-as; exercise an actual stop/relaunch.
         Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
-        Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
+        Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity") | Out-Null
         Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
         Show-WidgetPage
     } else {

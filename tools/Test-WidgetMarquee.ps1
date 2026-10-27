@@ -1,4 +1,4 @@
-param([string]$OutputDirectory='artifacts/auto-marquee-acceptance', [string]$FixturePackage='io.github.mutebutton.musicwidget.testplayer', [string]$AppPackage='io.github.mutebutton.oncue')
+param([string]$OutputDirectory='artifacts/auto-marquee-acceptance', [string]$FixturePackage='io.github.mutebutton.oncue.testplayer', [string]$AppPackage='io.github.mutebutton.oncue')
 . ([scriptblock]::Create((Get-Content tools/Test-WidgetEmulator.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory -FixturePackage $FixturePackage -AppPackage $AppPackage
 Add-Type -AssemblyName System.Drawing
 function Title-Capture([string]$Name) {
@@ -30,8 +30,8 @@ function Title-Difference([string]$First,[string]$Second) {
     } finally {$a.Dispose();$b.Dispose()}
 }
 Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
-Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.musicwidget.MainActivity") | Out-Null
-Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity") | Out-Null
+Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
 Start-Sleep -Seconds 3
 Fixture 'pause'
 Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null

@@ -1,8 +1,8 @@
 param([string]$OutputDirectory='artifacts/rim-fix/after')
 . ([scriptblock]::Create((Get-Content tools/Preview-ArtworkColors.ps1 -Raw))) -DefinitionsOnly -OutputDirectory $OutputDirectory
-$FixturePackage='io.github.mutebutton.musicwidget.testplayer'
+$FixturePackage='io.github.mutebutton.oncue.testplayer'
 Add-Type -AssemblyName System.Drawing
-Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.musicwidget.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
+Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
 Set-GlassMode 'Artwork glass'
 $cards=[Collections.Generic.List[Drawing.Bitmap]]::new()
 try {
