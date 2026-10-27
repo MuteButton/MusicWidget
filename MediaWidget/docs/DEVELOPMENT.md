@@ -68,7 +68,7 @@ The suite taps actual widget controls, checks MediaSession callbacks, captures r
 
 ## Signed release verification
 
-See [release acceptance](../tools/ONCUE_RELEASE_ACCEPTANCE.md) for the delivered APK identity and measured results. The standalone `:test-player` module publishes media sessions in a separate application; it is not bundled into the shipping widget. Build from `MediaWidget` with local signing configuration:
+See [OnCue 2.0 release notes](RELEASE_2.0.md) for the delivered APK identity and measured results. The standalone `:test-player` module publishes media sessions in a separate application; it is not bundled into the shipping widget. Build from `MediaWidget` with local signing configuration:
 
 ```powershell
 .\gradlew.bat :app:assembleRelease :app:testDebugUnitTest :app:lintRelease :test-player:assembleDebug --max-workers=1
@@ -100,3 +100,5 @@ For the permanent application identity, bundle-derived APK packaging, CI and sto
 ### Fast background lifecycle checks
 
 Run `tools/Test-ReleaseBackground.ps1` from the repository root using its full `MediaWidget/tools/` path on the prepared emulator. The suite uses the signed APK and forces idle transitions, injects one process crash, tests explicit reopen after force-stop, and restores emulator settings. See [measured results and platform limits](../tools/BACKGROUND_ACCEPTANCE.md).
+
+See [current limitations](KNOWN_LIMITATIONS.md) for battery behavior, accessibility gaps and verification scope.

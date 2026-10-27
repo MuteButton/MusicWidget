@@ -1,15 +1,12 @@
 # Public release preparation
 
-Current readiness decision and open usability/device gates: [October 24 release review](RELEASE_REVIEW_2026-10-24.md).
+Current readiness decision and open usability/device gates: [Current limitations](KNOWN_LIMITATIONS.md).
 
 ## Stable identity and phone installation
 
-OnCue 1.2 now uses the registered `io.github.mutebutton.oncue`, version code 3, minimum Android 7.0 (API 24), and target API 36. The previous `io.github.mutebutton.musicwidget` test release and `com.example.mediawidget` prototype are separate apps: their widgets and notification permission do not migrate automatically. Add the new widget and grant access once. Future releases must retain the new ID and signing certificate and increase the version code.
+OnCue 2.0 uses `io.github.mutebutton.oncue`, version code 16, minimum Android 7.0 (API 24), and target API 36. Existing OnCue testers can update in place. Historical 1.0 uses `com.example.mediawidget` and is a separate app. Retain the current ID and signing identity for future updates.
 
-The signed universal APK is generated from the signed app bundle by Google's bundletool. It can be downloaded directly to a phone and installed without Google Play. The AAB is for store submission, not direct installation.
-
-The limited-distribution registration changes the application ID while retaining the neutral signing certificate. This build installs separately from previous Music Widget/OnCue test builds; settings and notification access must be configured again. The GitHub repository URL and existing signing-backup folder retain their original names.
-
+The signed universal APK is generated from the signed bundle by bundletool. Download the APK from [GitHub releases](https://github.com/MuteButton/OnCue/releases) for direct phone installation. The AAB is for store submission.
 ## Build and package
 
 Keep `keystore.properties` and the release keystore local and ignored. From `MediaWidget`:
@@ -21,21 +18,19 @@ Keep `keystore.properties` and the release keystore local and ignored. From `Med
 From the repository root, with bundletool 1.18.3 at `artifacts/tooling/bundletool-1.18.3.jar`:
 
 ```powershell
-.\MediaWidget\tools\Package-Release.ps1 -OutputDirectory artifacts/oncue-transparent-release -DeviceApks
-python MediaWidget/tools/audit_dependencies.py MediaWidget/app/build/reports/dependency-inventory.json artifacts/oncue-transparent-release/dependency-audit.json
+.\MediaWidget\tools\Package-Release.ps1 -OutputDirectory artifacts/oncue-2.0-final -DeviceApks
+python MediaWidget/tools/audit_dependencies.py MediaWidget/app/build/reports/dependency-inventory.json artifacts/oncue-2.0-final/dependency-audit.json
 ```
 
-Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/oncue-transparent-release/` are `OnCue-1.2.apk`, `OnCue-1.2.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
+Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/oncue-2.0-final/` are `OnCue-2.0.apk`, `OnCue-2.0.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
 
 Before an update, verify the certificate matches the previous release, install with `adb install -r`, and verify settings, permissions and widget placement survive. A new signing certificate requires a planned migration; do not casually regenerate the release key.
 
 ## Signing recovery
 
-The public release uses the neutral certificate subject `CN=MuteButton, OU=Music Widget, O=MuteButton`. The registered application ID is new, so older test builds can coexist; no uninstall is required. Future updates must retain the public signing key.
+The public release uses the neutral certificate subject `CN=MuteButton, OU=Music Widget, O=MuteButton`. Older builds with different application IDs can coexist. Future updates must retain the public signing key.
 
 The owner-authorized setup saved a matching encrypted PKCS12 keystore and its recovery password in the Windows Documents folder, under `Music Widget signing backup`. That folder restricts access to the current Windows account and SYSTEM. The recovery password file is plaintext: move a copy of the complete folder to an encrypted off-device vault and verify recovery before publication. Same-PC storage is not an independent backup. Never commit these files. `tools/Initialize-PublicSigning.ps1` is a one-time initializer and refuses to overwrite an existing identity.
-
-The neutral release artifacts and their fresh emulator evidence are under ignored `artifacts/public-release-neutral/`; earlier `artifacts/public-release/` evidence belongs to the previous signing identity. The current OnCue 1.2 artifacts and verification are in `artifacts/oncue-transparent-release/`.
 
 ## Privacy, security and artwork
 
@@ -45,7 +40,7 @@ The neutral release artifacts and their fresh emulator evidence are under ignore
 - The owner confirmed on October 23, 2026 that the supplied v5 design and README/demo artwork may be redistributed. The code's MIT license alone does not establish image rights. Keep that confirmation with release records.
 - The resolved production dependency scan uses OSV and sends Maven coordinates only. No advisory results are a database snapshot, not a guarantee of no vulnerabilities.
 
-Registered-package build and verification: [OnCue registered-package acceptance](../tools/ONCUE_REGISTERED_ACCEPTANCE.md). Historical rename/upgrade results remain in [OnCue 1.2 acceptance](../tools/ONCUE_RELEASE_ACCEPTANCE.md).
+Current release: [OnCue 2.0](RELEASE_2.0.md).
 
 ## Automated verification
 
