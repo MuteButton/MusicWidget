@@ -31,6 +31,19 @@ internal object WidgetRenderer {
     private data class TrackIdentity(val token: MediaSession.Token, val mediaId: String?,
                                      val title: String?, val artist: String?)
     private val titleTracks = mutableMapOf<Int, TrackIdentity>()
+    private val transitionTitle = TransitionTitle()
+    private var displayTitleToken: MediaSession.Token? = null
+    private var displayTitleValue: String? = null
+    private var titleExpiry: Runnable? = null
+
+    private fun rawTitle(controller: MediaController): String? =
+        controller.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() }
+            ?: controller.metadata?.description?.title?.toString()
+
+    private fun displayedTitle(context: Context, controller: MediaController): String =
+        displayTitleValue?.takeIf { displayTitleToken == controller.sessionToken }
+            ?: rawTitle(controller)?.takeIf { it.isNotBlank() }
+            ?: context.getString(R.string.unknown_title)
     private var selectedToken: MediaSession.Token? = null
     private var artToken: MediaSession.Token? = null
     private var artGeneration: Int? = null
@@ -127,11 +140,34 @@ internal object WidgetRenderer {
             titleTasks.remove(id)?.let { titleHandler.removeCallbacks(it) }
             titleTracks.remove(id)
         }
+        titleExpiry?.let { titleHandler.removeCallbacks(it) }
+        titleExpiry = null
+        if (controller == null || ids.isEmpty()) {
+            transitionTitle.reset()
+            displayTitleToken = null
+            displayTitleValue = null
+        } else {
+            val result = transitionTitle.resolve(controller.sessionToken, rawTitle(controller),
+                context.getString(R.string.unknown_title), SystemClock.elapsedRealtime())
+            displayTitleToken = controller.sessionToken
+            displayTitleValue = result.title
+            result.refreshAt?.let { deadline ->
+                val app = context.applicationContext
+                val token = controller.sessionToken
+                val task = Runnable {
+                    titleExpiry = null
+                    val current = chooseController(controllers(app))
+                    if (current?.sessionToken == token) renderAll(app, current)
+                }
+                titleExpiry = task
+                titleHandler.postDelayed(task, (deadline - SystemClock.elapsedRealtime()).coerceAtLeast(1))
+            }
+        }
         if (ids.isEmpty()) return
         val interactive = isScreenAvailable(context)
         val track = controller?.let {
             TrackIdentity(it.sessionToken, it.metadata?.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
-                it.metadata?.description?.title?.toString(), it.metadata?.description?.subtitle?.toString())
+                displayedTitle(context, it), it.metadata?.description?.subtitle?.toString())
         }
         if (controller != null && controller.packageName != context.packageName) {
             val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -210,8 +246,7 @@ internal object WidgetRenderer {
         } else {
             val metadata = controller.metadata
             val description = metadata?.description
-            val title = metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() }
-                ?: description?.title?.toString()?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_title)
+            val title = displayedTitle(context, controller)
             val artist = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)?.takeIf { it.isNotBlank() }
                 ?: description?.subtitle?.toString()?.takeIf { it.isNotBlank() } ?: appLabel(context, controller.packageName)
             if (!preserveTitle) {
@@ -296,9 +331,7 @@ internal object WidgetRenderer {
 
     private fun scrollTitle(context: Context, id: Int, controller: MediaController) {
         if (id !in widgetIds(context) || !v5(context, id)) return
-        val title = controller.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() }
-            ?: controller.metadata?.description?.title?.toString()?.takeIf { it.isNotBlank() }
-            ?: context.getString(R.string.unknown_title)
+        val title = displayedTitle(context, controller)
         val app = context.applicationContext
         val manager = AppWidgetManager.getInstance(app)
         val landscape = app.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -320,10 +353,10 @@ internal object WidgetRenderer {
         }
         display(false)
         if (lineWidth <= viewport) return
-        // The layout animation slides the entire title once in 16 seconds, after
-        // a 600 ms initial hold. Restore ellipsis afterward. Only two delayed
-        // updates; the launcher owns the frames, independent of timer updates.
-        val duration = 17_000L
+        // XML moves 30 dp/second, independent of title length. Replace the child
+        // once its measured text has traversed, cancelling the long animation.
+        // Only start/reset callbacks; the launcher owns every animation frame.
+        val duration = MarqueeTiming.restoreDelay(lineWidth / density)
         val start = Runnable {
             display(true)
             val restore = Runnable {
@@ -338,6 +371,11 @@ internal object WidgetRenderer {
     }
 
     fun cancelTitleScrolls() {
+        titleExpiry?.let { titleHandler.removeCallbacks(it) }
+        titleExpiry = null
+        transitionTitle.reset()
+        displayTitleToken = null
+        displayTitleValue = null
         titleTasks.values.forEach { titleHandler.removeCallbacks(it) }
         titleTasks.clear()
     }
@@ -353,7 +391,8 @@ internal object WidgetRenderer {
 
     private fun progress(context: Context, id: Int, views: RemoteViews, controller: MediaController) {
         val duration = controller.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
-        val state = controller.playbackState
+        val listener = MediaListenerService.instance
+        val state = if (listener != null) listener.playbackState(controller) else controller.playbackState
         val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val height = AppWidgetManager.getInstance(context).getAppWidgetOptions(id)
             .getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 96)

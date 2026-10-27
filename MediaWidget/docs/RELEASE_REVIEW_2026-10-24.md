@@ -2,6 +2,48 @@
 
 Reviewed October 24, 2026. **Recommendation: continue controlled testing; hold unrestricted public release.** Playback is well covered on the prepared emulator. Accessibility defects, physical-device coverage, signing recovery, and publication gates remain open.
 
+## Final candidate verification — October 26–27, 2026
+
+The local preview8 candidate includes raw playback-state callback preservation,
+stationary-timer scheduling guards, transitional browser-title filtering,
+constant 30dp/second automatic marquee, a centered missing-cover note, Samsung
+Unrestricted guidance, and the API 24 alpha-mask correction. The distinct idle
+badge is retained. No foreground notification or claimed Optimized-mode cure.
+
+- Final signed APK: `artifacts/final-candidate/OnCue-1.2.4-preview8.apk`.
+- SHA-256: `DF39867DFE041AB98D437CB5BD90B09760A64FE82C054A1C8CA0B3EA37CB2025`.
+- Release/debug/test APK and signed AAB builds pass; 24 JVM tests pass.
+- Release lint: zero errors, 78 warnings; warnings are not waived by this report.
+- API 24: all four instrumentation tests pass, including the exact GitHub
+  transparency failure. Local fix is verified; remote CI awaits an approved push.
+- Byte-identical signed APK: all 41 core acceptance checks pass on API 36.1.
+- All 13 automatic marquee checks pass, including sustained playing-title travel,
+  seek refresh, restoration, duplicate metadata, short titles and tap navigation.
+- October 27: all 13 timing-recovery and nine title-transition checks pass on the
+  same APK, including raw unknown position, recovery, pause/resume and hostname
+  replacement without disrupting timestamps. Evidence: `recovery-rerun/` and
+  `title-transition/` under the candidate artifacts.
+- Samsung Brave screen-off/unlock: timer advances 5:08 to 5:21, with matching
+  progress. Android reported Dozing during screen-off; the user unlocked after wake.
+  Samsung and emulator installed APK hashes both match the final APK.
+- Earlier final-build Samsung YouTube Music return-to-home samples advance 3:42
+  to 3:54. These bounded checks use the selected Unrestricted setting, not an
+  Optimized-mode or overnight battery certification.
+- Recovery-suite setup initially reused an existing fixture task; the focused
+  suites now request a fresh task, matching the marquee harness. Another attempt
+  started before Android finished booting and was excluded. The final runs passed
+  after full boot. No app assertion was weakened.
+
+Verification of these changes is complete within the tested device/suite scope.
+The candidate is ready for review and an approved push, not unconditional public
+release. The GitHub workflow must rerun after pushing. Test fixtures were stopped
+and the Samsung's original stay-awake setting was restored after testing.
+
+The small touch targets, system-font scaling/TalkBack gaps and distribution/key
+recovery gates below remain open. These test results do not certify battery drain,
+all Samsung versions, or absence of every possible memory leak. Private captures,
+APK/AAB files and player/session data remain ignored artifacts, not source assets.
+
 ## Findings by priority
 
 ### UI checkpoint update — October 26, 2026

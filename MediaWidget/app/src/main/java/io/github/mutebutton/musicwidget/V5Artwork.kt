@@ -57,6 +57,9 @@ internal object V5Artwork {
     }
 
     private fun applySilhouette(bitmap: Bitmap, playing: Boolean) {
+        // Opaque decoded assets can retain hasAlpha=false after an ARGB copy,
+        // particularly on API 24. Enable alpha before writing the silhouette.
+        bitmap.setHasAlpha(true)
         val pixels = IntArray(bitmap.width * bitmap.height)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
         for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
@@ -87,7 +90,9 @@ internal object V5Artwork {
             }
             canvas.drawRect(0f,0f,307f,225f,paint)
             context.getDrawable(R.drawable.ic_widget_music)?.mutate()?.let { note ->
-                note.setBounds(61,58,151,153); note.draw(canvas)
+                // Center the visible glyph (viewport x=2..20, y=1.9..22.4)
+                // in the artwork column; keep it before the fade at x=215.
+                note.setBounds(112,64,202,159); note.draw(canvas)
             }
             missingCover=it
         }

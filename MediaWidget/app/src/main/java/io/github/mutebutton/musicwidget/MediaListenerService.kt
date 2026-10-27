@@ -28,6 +28,10 @@ class MediaListenerService : NotificationListenerService(),
     private data class MediaDestination(val packageName: String, val token: MediaSession.Token, val intent: PendingIntent)
     private val destinations = mutableMapOf<String, MediaDestination>()
     private val callbacks = mutableMapOf<MediaSession.Token, Pair<MediaController, MediaController.Callback>>()
+    private val reportedStates = mutableMapOf<MediaSession.Token, android.media.session.PlaybackState?>()
+    internal fun playbackState(controller: MediaController): android.media.session.PlaybackState? =
+        if (reportedStates.containsKey(controller.sessionToken)) reportedStates[controller.sessionToken]
+        else controller.playbackState
     private val tick = object : Runnable {
         override fun run() {
             // Deliver the final clamped timestamp once before stopping at duration.
@@ -113,6 +117,7 @@ class MediaListenerService : NotificationListenerService(),
         val current = (controllers ?: WidgetRenderer.controllers(this)).filter { it.sessionToken != destroyed }
         val tokens = current.map { it.sessionToken }.toSet()
         callbacks.keys.filter { it !in tokens }.forEach { token ->
+            reportedStates.remove(token)
             callbacks.remove(token)?.let { (controller, callback) -> controller.unregisterCallback(callback) }
         }
         current.forEach { controller ->
@@ -120,7 +125,12 @@ class MediaListenerService : NotificationListenerService(),
                 val callback = object : MediaController.Callback() {
                     override fun onMetadataChanged(metadata: android.media.MediaMetadata?) = refresh()
                     // Position-only changes (seeks) must update even if state/actions are unchanged.
-                    override fun onPlaybackStateChanged(state: android.media.session.PlaybackState?) = refresh()
+                    override fun onPlaybackStateChanged(state: android.media.session.PlaybackState?) {
+                        // Controller getters may extrapolate UNKNOWN_POSITION (-1) into
+                        // a plausible positive time. Preserve the player's raw callback.
+                        reportedStates[controller.sessionToken] = state
+                        refresh()
+                    }
                     override fun onSessionDestroyed() = refresh(destroyed = controller.sessionToken)
                 }
                 controller.registerCallback(callback, handler)
@@ -135,15 +145,14 @@ class MediaListenerService : NotificationListenerService(),
 
     private fun shouldTick(): Boolean {
         if (!connected || !WidgetRenderer.isScreenAvailable(this) || WidgetRenderer.widgetIds(this).isEmpty()) return false
-        val state = active?.playbackState ?: return false
+        val state = active?.let { playbackState(it) } ?: return false
         val duration = active?.metadata?.getLong(android.media.MediaMetadata.METADATA_KEY_DURATION) ?: return false
-        return WidgetRenderer.isAdvancing(state) && duration > 0 &&
-            PlaybackMath.position(state.position, state.lastPositionUpdateTime, SystemClock.elapsedRealtime(),
-                state.playbackSpeed, true, duration) < duration
+        return PlaybackMath.needsTick(state.position, state.lastPositionUpdateTime, SystemClock.elapsedRealtime(),
+            state.playbackSpeed, WidgetRenderer.isAdvancing(state), duration)
     }
 
     private fun nextTickDelay(): Long {
-        val state = active?.playbackState ?: return 1_000
+        val state = active?.let { playbackState(it) } ?: return 1_000
         val duration = active?.metadata?.getLong(android.media.MediaMetadata.METADATA_KEY_DURATION) ?: return 1_000
         val position = PlaybackMath.position(state.position, state.lastPositionUpdateTime,
             SystemClock.elapsedRealtime(), state.playbackSpeed, WidgetRenderer.isAdvancing(state), duration)
@@ -158,6 +167,7 @@ class MediaListenerService : NotificationListenerService(),
         handler.removeCallbacksAndMessages(null)
         callbacks.values.forEach { (controller, callback) -> controller.unregisterCallback(callback) }
         callbacks.clear()
+        reportedStates.clear()
         destinations.clear()
         active = null
         try { sessions.removeOnActiveSessionsChangedListener(this) } catch (_: SecurityException) { }

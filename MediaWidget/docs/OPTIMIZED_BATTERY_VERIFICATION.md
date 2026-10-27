@@ -1,8 +1,10 @@
-﻿# Optimized battery verification — October 26, 2026
+# Optimized battery verification — October 26, 2026
 
-## Decision
+## Decision — reopened after physical regression
 
-Functional sign-off for the tested OnCue 1.2.4-preview8 behavior on the Samsung
+The earlier functional sign-off is withdrawn: subsequent physical testing found Samsung background-process freezes coinciding with stopped timestamp updates. Sleep/wake and return-from-app reliability remain open. The observations below are historical passes, not proof of sustained reliability.
+
+Earlier assessment: functional sign-off for the tested OnCue 1.2.4-preview8 behavior on the Samsung
 under Optimized battery mode, with user acceptance of the phone behavior.
 No runtime changes were required for this investigation. This is a bounded
 functional sign-off, not certification of every device or overnight battery drain.

@@ -4,6 +4,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class PlaybackMathTest {
+    @Test fun noTickerForUnusableOrStationarySessions() {
+        for (speed in listOf(0f, Float.NaN, Float.POSITIVE_INFINITY))
+            assertEquals(false, PlaybackMath.needsTick(1000, 1000, 2000, speed, true, 10000))
+        assertEquals(false, PlaybackMath.needsTick(-1, 1000, 2000, 1f, true, 10000))
+        assertEquals(false, PlaybackMath.needsTick(1000, 0, 2000, 1f, true, 10000))
+        assertEquals(false, PlaybackMath.needsTick(1000, 1000, 2000, 1f, true, 0))
+        assertEquals(false, PlaybackMath.needsTick(1000, 1000, 2000, 1f, false, 10000))
+    }
+    @Test fun tickerFollowsDirectionAndRestartsWithValidTiming() {
+        assertEquals(true, PlaybackMath.needsTick(1000, 1000, 2000, 1f, true, 10000))
+        assertEquals(false, PlaybackMath.needsTick(9000, 1000, 2000, 1f, true, 10000))
+        assertEquals(true, PlaybackMath.needsTick(10000, 1000, 2000, -1f, true, 10000))
+        assertEquals(false, PlaybackMath.needsTick(1000, 1000, 2000, -1f, true, 10000))
+    }
     @Test fun pausedPositionDoesNotDrift() = assertEquals(84_000, PlaybackMath.position(84_000, 1000, 9000, 1f, false, 282_000))
     @Test fun playingPositionUsesSpeedAndMonotonicTime() = assertEquals(100_000, PlaybackMath.position(84_000, 1000, 9000, 2f, true, 282_000))
     @Test fun positionIsClampedToDuration() = assertEquals(90_000, PlaybackMath.position(84_000, 1000, 9000, 1f, true, 90_000))

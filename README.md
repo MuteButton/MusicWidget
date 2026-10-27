@@ -42,7 +42,7 @@ Your media app supplies the track information and supported controls. Unknown-du
 
 ### Samsung: timer stops after a few seconds
 
-Samsung can freeze OnCue's background process even while its notification listener remains connected. If timestamps and progress stop, open **Settings → Apps → OnCue → Battery → Unrestricted**. This exception applies only to OnCue and can increase battery use. OnCue still stops its timer updates when the screen is off. The Samsung setup screen includes a shortcut to OnCue's app settings.
+Samsung can freeze OnCue's background process even while its notification listener remains connected. If timestamps and progress stop, open **Settings → Apps → OnCue → Battery → Unrestricted**. This exception applies only to OnCue and can increase battery use. Unrestricted permits background execution; it does not force unlimited resource use. OnCue stops periodic timer updates when playback pauses or the screen is off or locked. Actual battery impact has not been quantified. You can return to Optimized at any time, but freezes may recur after unlocking or returning home. The Samsung setup screen includes a shortcut to OnCue's app settings.
 
 ## Local by design
 

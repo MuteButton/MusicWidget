@@ -5,6 +5,6 @@
     <string name="permission_required">Notification Access Required</string>
     <string name="permission_instruction">Please grant notification access to enable media controls.</string>
     <string name="grant_permission">Grant Permission</string>
-    <string name="samsung_battery_help">If the timer freezes on Samsung, open OnCue’s app settings, then Battery → Unrestricted. Samsung may otherwise freeze background updates. This can increase battery use; OnCue stops timer updates when the screen is off.</string>
+    <string name="samsung_battery_help">Timer or title freezes after unlocking or returning home? Samsung can suspend OnCue even while its widget is visible. Open app settings below, then Battery → Unrestricted. This allows background updates; it does not mean unlimited battery consumption. OnCue stops periodic timer updates while paused or when the screen is off or locked. Battery impact varies and has not been quantified. You can switch back to Optimized at any time, but updates may freeze again.</string>
     <string name="samsung_battery_settings">Open OnCue app settings</string>
 </resources>
