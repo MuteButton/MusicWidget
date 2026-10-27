@@ -1,0 +1,8 @@
+{
+  "folders": [{ "name": "OnCue", "path": "." }],
+  "settings": {
+    "java.import.exclusions": ["**/artifacts/**", "**/build/**", "**/.gradle/**"],
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "files.watcherExclude": { "**/artifacts/**": true }
+  }
+}

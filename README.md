@@ -8,7 +8,7 @@ A glass-style Android widget that brings album art, playback controls, and live 
 
 [Get started](#get-started) · [How it works](#made-for-everyday-listening) · [For developers](#for-developers)
 
-![OnCue in blue, green, and pink artwork-inspired glass, showing album art, track information, playback controls, and progress.](MediaWidget/docs/images/artwork-glass-showcase.png)
+![OnCue in blue, green, and pink artwork-inspired glass, showing album art, track information, playback controls, and progress.](docs/images/artwork-glass-showcase.png)
 
 *Actual emulator captures of the full glass layout, using demo tracks and test artwork.*
 
@@ -29,7 +29,7 @@ Prefer a consistent look? Choose **Classic glass** for the blue-purple finish. W
 
 ## Get started
 
-1. Install an APK built from this repository. See the [build guide](MediaWidget/docs/DEVELOPMENT.md#build-and-install).
+1. Install an APK built from this repository. See the [build guide](docs/DEVELOPMENT.md#build-and-install).
 2. Open OnCue and enable **Notification Access** using its setup action. This lets it discover active media sessions.
 3. Add **OnCue** from your launcher's widget picker, or use the app's add-widget action.
 4. Start playback in a media app, then return to your home screen.
@@ -56,15 +56,15 @@ Standard Android widgets do not provide a reliable callback for whether their sp
 
 ## For developers
 
-The Android project lives in [`MediaWidget/`](MediaWidget/). Open that folder in Android Studio, or build with its Gradle wrapper.
+The repository root is the Android project. Open it in Android Studio, or build with the Gradle wrapper.
 
 | Reference | What you will find |
 | --- | --- |
-| [Development guide](MediaWidget/docs/DEVELOPMENT.md) | Build/install commands, architecture, rendering and navigation behavior |
-| [Feature acceptance](MediaWidget/tools/FEATURE_ACCEPTANCE.md) | 117 functional emulator checks on the verified APK, manual evidence, and remaining coverage gaps |
-| [Emulator regression suite](MediaWidget/tools/REGRESSION_COVERAGE.md) | Repeatable widget, real Chrome, lifecycle, color, and visual tests |
-| [Performance and memory verification](MediaWidget/tools/NFR_VERIFICATION.md) | CPU samples, post-GC memory trends, resource counts, responsiveness, and test limits |
-| [Debug player and emulator setup](MediaWidget/tools/EMULATOR_WIDGET_TESTS.md) | Deterministic media sessions and test commands |
+| [Development guide](docs/DEVELOPMENT.md) | Build/install commands, architecture, rendering and navigation behavior |
+| [Feature acceptance](tools/FEATURE_ACCEPTANCE.md) | 117 functional emulator checks on the verified APK, manual evidence, and remaining coverage gaps |
+| [Emulator regression suite](tools/REGRESSION_COVERAGE.md) | Repeatable widget, real Chrome, lifecycle, color, and visual tests |
+| [Performance and memory verification](tools/NFR_VERIFICATION.md) | CPU samples, post-GC memory trends, resource counts, responsiveness, and test limits |
+| [Debug player and emulator setup](tools/EMULATOR_WIDGET_TESTS.md) | Deterministic media sessions and test commands |
 
 Verification is scoped to the documented APK and emulator. Physical Samsung battery behavior, other launchers/API versions, and longer soak testing are not implied by those results.
 
@@ -72,6 +72,6 @@ Verification is scoped to the documented APK and emulator. Physical Samsung batt
 
 Bug reports and improvements are welcome. For playback issues, include your Android version, launcher, media app, and steps to reproduce the behavior.
 
-[MIT licensed](MediaWidget/LICENSE).
+[MIT licensed](LICENSE).
 
-See the [privacy policy](PRIVACY.md) and [public release guide](MediaWidget/docs/PUBLIC_RELEASE.md) for privacy, signed APKs and Play distribution.
+See the [privacy policy](PRIVACY.md) and [public release guide](docs/PUBLIC_RELEASE.md) for privacy, signed APKs and Play distribution.
