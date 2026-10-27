@@ -2,6 +2,8 @@
 
 **Your music. Your artwork. Your home screen.**
 
+[Download OnCue 2.0](https://github.com/MuteButton/OnCue/releases/tag/oncue-v2.0.0) · [Historical 1.0](https://github.com/MuteButton/OnCue/releases/tag/oncue-v1.0.0)
+
 A glass-style Android widget that brings album art, playback controls, and live track progress to your home screen. Its colors follow your music, and your player stays a tap away.
 
 [Get started](#get-started) · [How it works](#made-for-everyday-listening) · [For developers](#for-developers)

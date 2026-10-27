@@ -20,4 +20,4 @@ Settings remain until you change them, clear app storage or uninstall. Revoke no
 
 ## Contact and policy updates
 
-Contact MuteButton through the [project support page](https://github.com/MuteButton/MusicWidget/issues). Issues are public: do not post private media information, saved URLs, passwords or device logs containing personal data. This policy is maintained in the repository; changes will update its effective date and the in-app policy where applicable.
+Contact MuteButton through the [project support page](https://github.com/MuteButton/OnCue/issues). Issues are public: do not post private media information, saved URLs, passwords or device logs containing personal data. This policy is maintained in the repository; changes will update its effective date and the in-app policy where applicable.

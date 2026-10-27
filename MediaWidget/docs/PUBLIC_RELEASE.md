@@ -61,7 +61,7 @@ The release integration scripts test the actual signed APK with the separate acc
 - Developer: **MuteButton**
 - Short description: **Artwork-inspired glass, playback controls and live music progress.**
 - Description: OnCue brings your current track, album artwork and playback controls to your Android home screen. Choose colors inspired by your artwork or a consistent Classic glass finish. Long titles scroll once in the full layout. Tap the track to return to your player, or choose a default app and optional browser URL for when nothing is playing. Notification access is required to discover media sessions. Available controls, progress and browser-tab navigation depend on the media app. Full glass styling requires Android 12 or newer; earlier versions use the native layout.
-- Support: https://github.com/MuteButton/MusicWidget/issues
+- Support: https://github.com/MuteButton/OnCue/issues
 - Privacy URL after publishing this file: use the public repository URL for PRIVACY.md on the release/default branch.
 - Data safety draft: the app does not transmit data to the developer and has no analytics/ads SDK. It accesses media information locally and stores settings; Android backup and explicit launches of other apps are disclosed in the privacy policy. Confirm the current Console questionnaire against this behavior before submission.
 
