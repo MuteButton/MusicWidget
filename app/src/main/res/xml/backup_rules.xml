@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <!-- Only user settings; never cache files, artwork, or diagnostics. -->
-    <include domain="sharedpref" path="media_widget.xml"/>
+    <include domain="sharedpref" path="oncue_widget.xml"/>
 </full-backup-content>

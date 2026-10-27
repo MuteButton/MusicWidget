@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory=$true)][int]$Width,
     [Parameter(Mandatory=$true)][int]$Height,
     [switch]$Idle,
-    [string]$SourceDirectory = 'artifacts/v5-source/music-widget-v5',
+    [string]$SourceDirectory = 'artifacts/v5-source/oncue-v5',
     [string]$OutputDirectory = 'artifacts/media-widget-v5-comparison'
 )
 Add-Type -AssemblyName System.Drawing

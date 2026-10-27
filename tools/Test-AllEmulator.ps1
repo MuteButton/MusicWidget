@@ -50,7 +50,7 @@ $font=(Adb-Run @('shell','settings','get','system','font_scale')).Trim()
 $listeners=(Adb-Run @('shell','settings','get','secure','enabled_notification_listeners')).Trim()
 $listener='io.github.mutebutton.oncue/.MediaListenerService'
 Adb-Run @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
-Adb-Run @('shell','run-as','io.github.mutebutton.oncue','cp','shared_prefs/media_widget.xml','files/full-regression-prefs.xml') | Out-Null
+Adb-Run @('shell','run-as','io.github.mutebutton.oncue','cp','shared_prefs/oncue_widget.xml','files/full-regression-prefs.xml') | Out-Null
 $stages=[ordered]@{
     core='Test-WidgetEmulator.ps1'
     lifecycle='Test-WidgetExtended.ps1'
@@ -93,7 +93,7 @@ try {
     }
 } finally {
     Adb-Run @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
-    Adb-Run @('shell','run-as','io.github.mutebutton.oncue','cp','files/full-regression-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
+    Adb-Run @('shell','run-as','io.github.mutebutton.oncue','cp','files/full-regression-prefs.xml','shared_prefs/oncue_widget.xml') | Out-Null
     Adb-Run @('shell','settings','put','system','font_scale',$font) | Out-Null
     if($listeners -notmatch 'io.github.mutebutton.oncue/') {Adb-Run @('shell','cmd','notification','disallow_listener',$listener) | Out-Null}
     Adb-Run @('shell','am','start','-W','-n','io.github.mutebutton.oncue/.MainActivity') | Out-Null

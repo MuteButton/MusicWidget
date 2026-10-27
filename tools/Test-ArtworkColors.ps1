@@ -26,13 +26,13 @@ function Compare-Crop([string]$First,[string]$Second,[Drawing.Rectangle]$Bounds,
     } finally {$a.Dispose();$b.Dispose()}
 }
 Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
-$prefs=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cat','shared_prefs/media_widget.xml'))
+$prefs=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cat','shared_prefs/oncue_widget.xml'))
 $setting=$prefs.SelectSingleNode("/map/boolean[@name='artwork_glass']")
 if($setting){[void]$setting.ParentNode.RemoveChild($setting)}
 $defaultPrefs=Join-Path $OutputDirectory 'default-colors-prefs.xml'
 $prefs.Save($defaultPrefs)
 Invoke-Adb @('push',$defaultPrefs,'/data/local/tmp/default-colors-prefs.xml') | Out-Null
-Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cp','/data/local/tmp/default-colors-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
+Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cp','/data/local/tmp/default-colors-prefs.xml','shared_prefs/oncue_widget.xml') | Out-Null
 Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.oncue/.MainActivity') | Out-Null
 Assert-Eventually { (Find-Node (Read-Ui) 'color_mode_button').text -eq 'Colors: Artwork glass' } 'Absent color preference defaults to Artwork glass'
 Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.oncue/.debug.DebugMediaActivity','--es','command','reset') | Out-Null

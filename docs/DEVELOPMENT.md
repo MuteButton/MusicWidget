@@ -99,7 +99,7 @@ For the permanent application identity, bundle-derived APK packaging, CI and sto
 
 ### Fast background lifecycle checks
 
-Run `tools/Test-ReleaseBackground.ps1` from the repository root using its full `tools/` path on the prepared emulator. The suite uses the signed APK and forces idle transitions, injects one process crash, tests explicit reopen after force-stop, and restores emulator settings. See [measured results and platform limits](../tools/BACKGROUND_ACCEPTANCE.md).
+Run `tools/Test-ReleaseBackground.ps1` from the repository root using its full `tools/` path on the prepared emulator. The suite uses the signed APK and forces idle transitions, injects one process crash, tests explicit reopen after force-stop, and restores emulator settings. See [measured results and platform limits](KNOWN_LIMITATIONS.md).
 
 See [current limitations](KNOWN_LIMITATIONS.md) for battery behavior, accessibility gaps and verification scope.
 
@@ -108,6 +108,6 @@ For VS Code, open OnCue.code-workspace at the repository root to display the pro
 ## Component naming in 2.0.1
 
 Internal app, fixture and probe packages now use `io.github.mutebutton.oncue`.
-The registered application ID and signing key are unchanged. Updating from 2.0
-requires removing/re-adding existing widgets and enabling notification access for
+The registered application ID is unchanged. A new OnCue signing certificate replaces the previous identity. Updating from 2.0
+requires uninstalling the old app, installing the new APK, adding widgets and enabling notification access for
 the renamed listener. Historical 2.0 release assets are unchanged.

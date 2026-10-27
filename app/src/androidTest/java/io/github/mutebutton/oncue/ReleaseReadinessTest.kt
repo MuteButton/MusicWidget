@@ -60,7 +60,7 @@ class ReleaseReadinessTest {
             }
             return result
         }
-        val settings = "sharedpref" to "media_widget.xml"
+        val settings = "sharedpref" to "oncue_widget.xml"
         assertEquals(listOf(settings), includes(R.xml.backup_rules))
         assertEquals(listOf(settings, settings), includes(R.xml.data_extraction_rules))
     }

@@ -1,5 +1,5 @@
 # Local verification evidence, user design inputs, and emulator tooling.
-# Curated product screenshots live in MediaWidget/docs/images instead.
+# Curated product screenshots live in docs/images instead.
 /artifacts/
 /emulator*.log
 

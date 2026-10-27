@@ -1,4 +1,4 @@
-param([string]$SourceDirectory='artifacts/v5-source/music-widget-v5',
+param([string]$SourceDirectory='artifacts/v5-source/oncue-v5',
       [string]$OutputDirectory='artifacts/media-widget-v5-source-audit')
 # Audit image layers only; never executes any code from the handoff archive.
 Add-Type -AssemblyName System.Drawing

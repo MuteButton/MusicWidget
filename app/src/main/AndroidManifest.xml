@@ -42,7 +42,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/media_widget_info" />
+                android:resource="@xml/oncue_widget_info" />
         </receiver>
 
         <service

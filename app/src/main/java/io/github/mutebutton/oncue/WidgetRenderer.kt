@@ -49,7 +49,7 @@ internal object WidgetRenderer {
     private var artGeneration: Int? = null
     private var roundedArt: Bitmap? = null
     private const val ART_SIZE = 256
-    const val PREFS = "media_widget"
+    const val PREFS = "oncue_widget"
     const val LAST_PLAYER = "last_player"
     const val PREFERRED_PLAYER = "preferred_player"
 

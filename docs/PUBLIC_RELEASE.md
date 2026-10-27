@@ -4,7 +4,13 @@ Current readiness decision and open usability/device gates: [Current limitations
 
 ## Stable identity and phone installation
 
-OnCue 2.0 uses `io.github.mutebutton.oncue`, version code 16, minimum Android 7.0 (API 24), and target API 36. Existing OnCue testers can update in place. Historical 1.0 uses `com.example.mediawidget` and is a separate app. Retain the current ID and signing identity for future updates.
+The development build is OnCue 2.0.1, version code 17, with registered application
+ID `io.github.mutebutton.oncue`, minimum API 24 and target API 36. This build uses
+a newly generated OnCue certificate. It cannot update an installation signed by
+the prior certificate: uninstall the old app, install the new APK, grant notification
+access and add the widget again. Settings start fresh. Add the new certificate's
+SHA-256 fingerprint to the existing Android Developer Console package registration.
+Keep this new signing identity stable for subsequent releases.
 
 The signed universal APK is generated from the signed bundle by bundletool. Download the APK from [GitHub releases](https://github.com/MuteButton/OnCue/releases) for direct phone installation. The AAB is for store submission.
 ## Build and package
@@ -18,19 +24,19 @@ Keep `keystore.properties` and the release keystore local and ignored. From the 
 From the repository root, with bundletool 1.18.3 at `artifacts/tooling/bundletool-1.18.3.jar`:
 
 ```powershell
-.\tools\Package-Release.ps1 -OutputDirectory artifacts/oncue-2.0-final -DeviceApks
-python tools/audit_dependencies.py app/build/reports/dependency-inventory.json artifacts/oncue-2.0-final/dependency-audit.json
+.\tools\Package-Release.ps1 -OutputDirectory artifacts/oncue-2.0.1-final -DeviceApks
+python tools/audit_dependencies.py app/build/reports/dependency-inventory.json artifacts/oncue-2.0.1-final/dependency-audit.json
 ```
 
-Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/oncue-2.0-final/` are `OnCue-2.0.apk`, `OnCue-2.0.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
+Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/oncue-2.0.1-final/` are `OnCue-2.0.1.apk`, `OnCue-2.0.1.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
 
 Before an update, verify the certificate matches the previous release, install with `adb install -r`, and verify settings, permissions and widget placement survive. A new signing certificate requires a planned migration; do not casually regenerate the release key.
 
 ## Signing recovery
 
-The public release uses the neutral certificate subject `CN=MuteButton, OU=Music Widget, O=MuteButton`. Older builds with different application IDs can coexist. Future updates must retain the public signing key.
+The public release uses the neutral certificate subject `CN=MuteButton, OU=OnCue, O=MuteButton`. Older builds with different application IDs can coexist. Future updates must retain the public signing key.
 
-The owner-authorized setup saved a matching encrypted PKCS12 keystore and its recovery password in the Windows Documents folder, under `Music Widget signing backup`. That folder restricts access to the current Windows account and SYSTEM. The recovery password file is plaintext: move a copy of the complete folder to an encrypted off-device vault and verify recovery before publication. Same-PC storage is not an independent backup. Never commit these files. `tools/Initialize-PublicSigning.ps1` is a one-time initializer and refuses to overwrite an existing identity.
+The owner-authorized setup saved a matching encrypted PKCS12 keystore and its recovery password in the Windows Documents folder, under `OnCue signing backup`. That folder restricts access to the current Windows account and SYSTEM. The recovery password file is plaintext: move a copy of the complete folder to an encrypted off-device vault and verify recovery before publication. Same-PC storage is not an independent backup. Never commit these files. `tools/Initialize-PublicSigning.ps1` is a one-time initializer and refuses to overwrite an existing identity.
 
 ## Privacy, security and artwork
 
@@ -40,7 +46,7 @@ The owner-authorized setup saved a matching encrypted PKCS12 keystore and its re
 - The owner confirmed on October 23, 2026 that the supplied v5 design and README/demo artwork may be redistributed. The code's MIT license alone does not establish image rights. Keep that confirmation with release records.
 - The resolved production dependency scan uses OSV and sends Maven coordinates only. No advisory results are a database snapshot, not a guarantee of no vulnerabilities.
 
-Current release: [OnCue 2.0](RELEASE_2.0.md).
+Published historical release (uses the previous certificate): [OnCue 2.0](RELEASE_2.0.md).
 
 ## Automated verification
 

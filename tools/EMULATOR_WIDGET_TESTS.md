@@ -12,10 +12,10 @@ Use the installed SDK's `adb` and the emulator's serial. Examples below omit `-s
 
 ```powershell
 $adb = (Join-Path $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { Join-Path $env:LOCALAPPDATA 'Android/Sdk' }) 'platform-tools/adb.exe')
-$fixture = 'com.example.mediawidget/.debug.DebugMediaActivity'
+$fixture = 'io.github.mutebutton.oncue.testplayer/io.github.mutebutton.oncue.debug.DebugMediaActivity'
 & $adb shell am start -n $fixture --es command reset
 & $adb shell input keyevent KEYCODE_HOME
-& $adb shell run-as com.example.mediawidget cat files/debug-media-state.json
+& $adb shell run-as io.github.mutebutton.oncue.testplayer cat files/debug-media-state.json
 & $adb shell dumpsys media_session
 ```
 
@@ -23,7 +23,7 @@ The fixture starts on **Afterglow - The Midnight**, at approximately **1:24 / 4:
 
 ## ADB control
 
-All commands use `adb shell am start -n com.example.mediawidget/.debug.DebugMediaActivity --es command COMMAND`. ADB setup commands immediately finish the fixture activity. Launching its session activity through the widget keeps the test-player screen visible, making open-player navigation verifiable. Add `--ez finish false` to keep a command's activity visible.
+All commands use `adb shell am start -n io.github.mutebutton.oncue.testplayer/io.github.mutebutton.oncue.debug.DebugMediaActivity --es command COMMAND`. ADB setup commands immediately finish the fixture activity. Launching its session activity through the widget keeps the test-player screen visible, making open-player navigation verifiable. Add `--ez finish false` to keep a command's activity visible.
 
 | Command | Effect |
 | --- | --- |
@@ -54,15 +54,15 @@ For commands with extra parameters, place the parameters after the command, e.g.
 Read current state without opening another app:
 
 ```powershell
-& $adb shell run-as com.example.mediawidget cat files/debug-media-state.json
+& $adb shell run-as io.github.mutebutton.oncue.testplayer cat files/debug-media-state.json
 & $adb logcat -d -s MWFixture:I MediaListenerService:E AndroidRuntime:E
 ```
 
 After the initial `reset` Activity command starts the foreground fixture, subsequent commands can be sent without changing the foreground app:
 
 ```powershell
-& $adb shell am broadcast -n com.example.mediawidget/.debug.DebugMediaReceiver --es command pause
-& $adb shell am broadcast -n com.example.mediawidget/.debug.DebugMediaReceiver --es command seek --el position 120000
+& $adb shell am broadcast -n io.github.mutebutton.oncue.testplayer/io.github.mutebutton.oncue.debug.DebugMediaReceiver --es command pause
+& $adb shell am broadcast -n io.github.mutebutton.oncue.testplayer/io.github.mutebutton.oncue.debug.DebugMediaReceiver --es command seek --el position 120000
 ```
 
 The receiver intentionally cannot start a stopped service from the background; start it through the Activity again after `stop`. These are debug-only exported controls.

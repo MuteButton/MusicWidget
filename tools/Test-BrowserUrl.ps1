@@ -26,7 +26,7 @@ function Set-Url([string]$Value) {
     Tap-XmlNode ((Read-Ui).SelectSingleNode("//node[@resource-id='android:id/button1']"))
 }
 Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
-if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as',$AppPackage,'cp','shared_prefs/media_widget.xml','files/browser-test-prefs.xml') | Out-Null }
+if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as',$AppPackage,'cp','shared_prefs/oncue_widget.xml','files/browser-test-prefs.xml') | Out-Null }
 try {
     Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity") | Out-Null
     Select-Player 'YouTube'
@@ -81,6 +81,6 @@ try {
     Assert-True ($normalLaunch -match 'ResumedActivity.*com.android.chrome') 'Idle tap without URL opens the chosen browser normally'
 } finally {
     Invoke-Adb @('shell','am','force-stop',$AppPackage) | Out-Null
-    if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as',$AppPackage,'cp','files/browser-test-prefs.xml','shared_prefs/media_widget.xml') | Out-Null }
+    if (-not $ReleaseApk) { Invoke-Adb @('shell','run-as',$AppPackage,'cp','files/browser-test-prefs.xml','shared_prefs/oncue_widget.xml') | Out-Null }
     Invoke-Adb @('shell','am','start','-W','-a','android.intent.action.MAIN','-f','0x10008000','-n',"$AppPackage/io.github.mutebutton.oncue.MainActivity") | Out-Null
 }

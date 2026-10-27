@@ -39,7 +39,7 @@ function Heap-Snapshot([string]$Name) {
     $memory | ConvertTo-Json | Set-Content (Join-Path $OutputDirectory 'memory-samples.json')
     Write-Output "SNAPSHOT: $Name Java=$($entry.javaAllocatedKB)KB Native=$($entry.nativeAllocatedKB)KB PSS=$($entry.pssKB)KB threads=$($entry.threads) FD=$fds"
 }
-Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cp','shared_prefs/media_widget.xml','files/nfr-original-prefs.xml') | Out-Null
+Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cp','shared_prefs/oncue_widget.xml','files/nfr-original-prefs.xml') | Out-Null
 try {
     $script:hz=[int](Invoke-Adb @('shell','getconf','CLK_TCK'))
     Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.oncue/.debug.DebugMediaActivity','--es','command','reset') | Out-Null
@@ -79,7 +79,7 @@ try {
     Invoke-Adb @('shell','input','keyevent','KEYCODE_WAKEUP') | Out-Null
     Invoke-Adb @('shell','wm','dismiss-keyguard') | Out-Null
     Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
-    Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cp','files/nfr-original-prefs.xml','shared_prefs/media_widget.xml') | Out-Null
+    Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cp','files/nfr-original-prefs.xml','shared_prefs/oncue_widget.xml') | Out-Null
     Invoke-Adb @('shell','am','start','-W','-n','io.github.mutebutton.oncue/.MainActivity') | Out-Null
     Invoke-Adb @('shell','input','keyevent','KEYCODE_HOME') | Out-Null
 }

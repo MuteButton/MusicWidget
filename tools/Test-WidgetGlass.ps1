@@ -34,7 +34,7 @@ Assert-Eventually { (Find-Node (Read-Ui) 'idle_title').text -eq 'No Media Playin
 $ui = Read-Ui
 $idleBounds = (Find-Node $ui 'idle_state').bounds
 Screenshot 'idle'
-$launchPreferences=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cat','shared_prefs/media_widget.xml'))
+$launchPreferences=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cat','shared_prefs/oncue_widget.xml'))
 $destination=@($launchPreferences.map.string | Where-Object {$_.name -eq 'preferred_player'} | ForEach-Object {$_.'#text'}) | Select-Object -First 1
 if(-not $destination){$destination=@($launchPreferences.map.string | Where-Object {$_.name -eq 'last_player'} | ForEach-Object {$_.'#text'}) | Select-Object -First 1}
 Tap-Node 'btn_open'
@@ -43,7 +43,7 @@ $ui = Read-Ui
 $chooser=$null -ne $ui.SelectSingleNode("//node[@text='Choose media app']")
 $playerVisible=$false
 if (-not $chooser) {
-    $preferences=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cat','shared_prefs/media_widget.xml'))
+    $preferences=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cat','shared_prefs/oncue_widget.xml'))
     $players=@($preferences.map.string | Where-Object {$_.name -in @('preferred_player','last_player')} | ForEach-Object {$_.'#text'})
     $playerVisible=@($ui.SelectNodes('//node') | Where-Object {$_.package -in $players}).Count -gt 0
 }
