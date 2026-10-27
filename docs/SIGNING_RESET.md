@@ -1,4 +1,4 @@
-# OnCue 2.0.1 naming and signing reset
+# OnCue 2.0 naming and signing reset
 
 All active package, resource, preference, signing-tool and documentation names
 now use OnCue. Obsolete reports were removed rather than relabeled as new results.

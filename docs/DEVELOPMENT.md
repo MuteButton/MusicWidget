@@ -105,7 +105,7 @@ See [current limitations](KNOWN_LIMITATIONS.md) for battery behavior, accessibil
 
 For VS Code, open OnCue.code-workspace at the repository root to display the project as OnCue and exclude local artifacts from Java discovery.
 
-## Component naming in 2.0.1
+## Component naming in 2.0
 
 Internal app, fixture and probe packages now use `io.github.mutebutton.oncue`.
 The registered application ID is unchanged. A new OnCue signing certificate replaces the previous identity. Updating from 2.0

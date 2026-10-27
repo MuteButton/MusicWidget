@@ -4,7 +4,7 @@ Current readiness decision and open usability/device gates: [Current limitations
 
 ## Stable identity and phone installation
 
-The development build is OnCue 2.0.1, version code 17, with registered application
+The development build is OnCue 2.0, version code 17, with registered application
 ID `io.github.mutebutton.oncue`, minimum API 24 and target API 36. This build uses
 a newly generated OnCue certificate. It cannot update an installation signed by
 the prior certificate: uninstall the old app, install the new APK, grant notification
@@ -24,11 +24,11 @@ Keep `keystore.properties` and the release keystore local and ignored. From the 
 From the repository root, with bundletool 1.18.3 at `artifacts/tooling/bundletool-1.18.3.jar`:
 
 ```powershell
-.\tools\Package-Release.ps1 -OutputDirectory artifacts/oncue-2.0.1-final -DeviceApks
-python tools/audit_dependencies.py app/build/reports/dependency-inventory.json artifacts/oncue-2.0.1-final/dependency-audit.json
+.\tools\Package-Release.ps1 -OutputDirectory artifacts/oncue-2.0-final -DeviceApks
+python tools/audit_dependencies.py app/build/reports/dependency-inventory.json artifacts/oncue-2.0-final/dependency-audit.json
 ```
 
-Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/oncue-2.0.1-final/` are `OnCue-2.0.1.apk`, `OnCue-2.0.1.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
+Omit `-DeviceApks` if no emulator is connected. Outputs in ignored `artifacts/oncue-2.0-final/` are `OnCue-2.0.apk`, `OnCue-2.0.aab`, APK sets and SHA256SUMS.txt. The packaging helper reads signing secrets locally and removes its temporary password files in a finally block. The production key is not uploaded to CI.
 
 Before an update, verify the certificate matches the previous release, install with `adb install -r`, and verify settings, permissions and widget placement survive. A new signing certificate requires a planned migration; do not casually regenerate the release key.
 

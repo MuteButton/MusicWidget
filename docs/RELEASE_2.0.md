@@ -1,33 +1,13 @@
-# OnCue 2.0 (historical release)
+# OnCue 2.0
 
-OnCue 2.0 promotes the approved glass widget to `main` and `release/2.0`.
-It includes artwork-adaptive colors, live media controls and progress, automatic
-long-title scrolling, browser/player routing, One UI sizing, equal skip-button
-touch areas, the refined control inset, and the corrected idle rim.
+Current main and release/2.0 contain the fully renamed OnCue app (version code 17).
+The application ID remains `io.github.mutebutton.oncue`. This replaces the earlier
+2.0 build with the new OnCue signing identity and renamed components/settings.
+Existing installs signed by the previous certificate must be uninstalled first.
+Enable notification access and add the widget again after installation.
+See [signing reset](SIGNING_RESET.md) for the public registration fingerprint.
 
-The code matches the verified 1.2.4 beta candidate except for version metadata
-and support links. Version code 16 permits existing OnCue testers to update.
-The application ID and signing identity are unchanged.
-
-## Release organization
-
-- Repository: https://github.com/MuteButton/OnCue
-- `release/2.0`: published OnCue 2.0, tag `oncue-v2.0.0`.
-- `release/1.0`: preserved former main at `1731bfc`, tag `oncue-v1.0.0`.
-  This historical source already declares version 1.0 and uses the original
-  the historical prototype package application ID. It is a separate app from OnCue 2.0,
-  not an in-place upgrade path. Its source has not been retroactively redesigned.
-- Superseded GitHub release entries are removed after local archival. Their
-  original Git tags remain historical references.
-
-## Known limitations
-
-Some touch widths remain below 48dp, widget text does not scale with system font
-size, and complete TalkBack traversal/spoken output remains unverified. Samsung
-Optimized battery mode can freeze updates; Unrestricted is recommended for
-reliable live progress. These limitations are not removed by the version rename.
-
-See the release assets for APK checksums and the final verification summary.
-
-Current `main` prepares 2.0.1 with fully renamed components and a new signing
-certificate. The published 2.0 assets and their original identity are unchanged.
+Includes adaptive glass colors, live media controls and progress, title marquee,
+player/browser routing, refined touch areas and the corrected idle rim.
+See [known limitations](KNOWN_LIMITATIONS.md) for battery, accessibility and
+verification boundaries. Historical 1.0 remains on release/1.0.
