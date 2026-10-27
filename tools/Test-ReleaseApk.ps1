@@ -102,7 +102,7 @@ try {
     Invoke-Adb @('shell','cmd','notification','disallow_listener',"$AppPackage/io.github.mutebutton.oncue.MediaListenerService") | Out-Null
     Assert-Eventually { (Find-Node (Read-Ui) 'btn_open').text -eq 'Connect' } 'Release exposes permission recovery'
     Tap-Node 'btn_open'
-    Assert-True ((Wait-Activity "ResumedActivity.*$AppPackage/io.github.mutebutton.oncue.MainActivity") -match 'MainActivity') 'Release Connect opens setup'
+    Assert-True ((Wait-Activity "ResumedActivity.*$AppPackage/(?:io.github.mutebutton.oncue)?\.MainActivity") -match 'MainActivity') 'Release Connect opens setup'
     Invoke-Adb @('shell','cmd','notification','allow_listener',"$AppPackage/io.github.mutebutton.oncue.MediaListenerService") | Out-Null
     Home
     Assert-Eventually { (Find-Node (Read-Ui) 'track_title').text -eq 'Afterglow' } 'Release recovers after permission restoration'
