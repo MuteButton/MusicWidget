@@ -3,7 +3,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <application>
-        <activity android:name=".debug.VisualCalibrationActivity" android:exported="true" android:excludeFromRecents="true" />
         <activity android:name=".debug.IdleReferenceActivity" android:exported="true" android:excludeFromRecents="true" />
         <activity
             android:name=".debug.DebugMediaActivity"

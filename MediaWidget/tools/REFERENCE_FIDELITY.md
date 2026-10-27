@@ -30,7 +30,7 @@ The supplied ZIP's README explicitly states that its exact sprites are raster cr
 
 Independent native capture region checks confirm zero differing pixels across all three complete control rectangles: previous 10,608 pixels, pause 13,794 pixels, next 9,682 pixels (`control-regions.json`). After extracting the shared renderer, all 26 core and 10 extended functional checks and six launcher/hash checks pass again; results are in `media-widget-v5-shared-renderer-tests/` and `media-widget-v5-shared-renderer-comparison/` under artifacts. Build, six unit tests, and lint also pass, with lint warnings remaining.
 
-The debug-only `VisualCalibrationActivity` compares actual Android RemoteViews/TextViews against the reference at the measured launcher size. Searches covered 5,544 title settings, 2,916 artist settings, 4,620 timestamp settings, and 55 artwork fade/extension settings. Calibration output is preserved in `../../artifacts/media-widget-v5-calibration-full.json` and `media-widget-v5-calibration-boundaries.json`. The finite search establishes the best tested settings in those ranges, not a mathematical global optimum.
+The now-removed debug-only typography calibration compared actual Android RemoteViews/TextViews against the reference at the measured launcher size. Searches covered 5,544 title settings, 2,916 artist settings, 4,620 timestamp settings, and 55 artwork fade/extension settings. Calibration output is preserved in `../../artifacts/media-widget-v5-calibration-full.json` and `media-widget-v5-calibration-boundaries.json`. The finite search establishes the best tested settings in those ranges, not a mathematical global optimum.
 
 An initial Paint-only font candidate was rejected after the real home-screen mean error increased to 6.83675/255. Actual TextView calibration improved it to 6.20780/255; corrected artwork fade, timestamps and progress colors improved it to 5.58337/255 before the final shared-surface control refinement. Each candidate has separately retained ADB captures. No reference-specific title or artist substitution is used in production.
 
@@ -54,7 +54,7 @@ Remaining differences include native font rasterization, glass lighting, edge gl
 
 The reference progress fill is approximately 199/560 = 35.5%, but its displayed times imply 84/(84+198) = 29.8%. Production progress remains derived from actual playback position and duration.
 
-`Compare-WidgetReference.ps1` produces a labeled reference/emulator/difference panel and a mean absolute RGB error. It rescales the real emulator card crop to the reference size, excludes the rounded exterior from the metric, and never substitutes its output for an emulator screenshot. A nonzero error is a failed pixel-identity comparison. This normalized diagnostic is not proof of native-resolution identity.
+The now-removed original reference comparison produced a labeled reference/emulator/difference panel and a mean absolute RGB error. It rescales the real emulator card crop to the reference size, excludes the rounded exterior from the metric, and never substitutes its output for an emulator screenshot. A nonzero error is a failed pixel-identity comparison. This normalized diagnostic is not proof of native-resolution identity.
 
 The reference album crop is debug-only fixture data. Production artwork still comes from the selected MediaSession.
 
