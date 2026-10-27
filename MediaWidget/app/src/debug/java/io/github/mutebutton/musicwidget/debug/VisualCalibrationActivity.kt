@@ -22,7 +22,6 @@ class VisualCalibrationActivity : Activity() {
         Thread {
             val reference = BitmapFactory.decodeResource(resources, R.drawable.v5_playing_skin_source)
             val result = JSONObject()
-            if (!intent.getBooleanExtra("artOnly", false)) {
             if (!intent.getBooleanExtra("timeOnly", false)) {
             result.put("title", calibrate(reference, "Afterglow", R.id.track_title, 307, 48, 291, 42,
                 75..81, 29..34, intArrayOf(400,500,600,700)))
@@ -31,61 +30,9 @@ class VisualCalibrationActivity : Activity() {
             }
             result.put("elapsed", calibrate(reference, "1:24", R.id.elapsed_time, 307, 170, 105, 39,
                 187..193, 18..23, intArrayOf(400,500)))
-            }
-            result.put("artwork", calibrateArt(reference))
             File(filesDir, "visual-calibration.json").writeText(result.toString(2))
             runOnUiThread { finish() }
         }.start()
-    }
-
-    @androidx.annotation.RequiresApi(31)
-    private fun calibrateArt(reference: Bitmap): JSONObject {
-        val rv=RemoteViews(packageName,R.layout.widget_media_v5)
-        V5Artwork.bind(this,rv,979f/resources.displayMetrics.density,true,true)
-        rv.setViewVisibility(R.id.media_state,View.VISIBLE)
-        rv.setViewVisibility(R.id.idle_state,View.GONE)
-        val root=rv.apply(this,FrameLayout(this))
-        val image=root.findViewById<android.widget.ImageView>(R.id.album_art)
-        // Reproduce the historical square/edge experiment independently of the
-        // current full-frame production artwork placement.
-        image.layoutParams=(image.layoutParams as FrameLayout.LayoutParams).apply {
-            leftMargin=(10*979f/1030f+0.5f).toInt()
-            topMargin=(5*979f/1030f+0.5f).toInt()
-            height=(215*979f/1030f+0.5f).toInt()
-        }
-        val source=Bitmap.createBitmap(reference,10,5,215,215)
-        val expected=Bitmap.createScaledBitmap(reference,979,214,true)
-        val output=Bitmap.createBitmap(979,214,Bitmap.Config.ARGB_8888)
-        val canvas=Canvas(output)
-        val target=IntArray(292*214); val actual=IntArray(292*214)
-        expected.getPixels(target,0,292,0,0,292,214)
-        val ws=View.MeasureSpec.makeMeasureSpec(979,View.MeasureSpec.EXACTLY)
-        val hs=View.MeasureSpec.makeMeasureSpec(214,View.MeasureSpec.EXACTLY)
-        var best=Double.MAX_VALUE; var record=JSONObject()
-        val styles=mutableListOf<IntArray>()
-        for (width in intArrayOf(0,4,8,16,24,35)) for(radius in intArrayOf(0,8,16,24,40,64)) styles.add(intArrayOf(width,radius,160,0,280))
-        for(start in intArrayOf(160,185,200,215)) {
-            styles.add(intArrayOf(0,0,start,1,280))
-            if(start!=160) for(radius in intArrayOf(0,24)) styles.add(intArrayOf(0,radius,start,0,280))
-        }
-        for(start in intArrayOf(230,245)) styles.add(intArrayOf(0,0,start,0,280))
-        for(start in intArrayOf(160,185,200,215,230,245,265)) styles.add(intArrayOf(0,0,start,0,297))
-        for(style in styles) {
-            val width=style[0]; val radius=style[1]; val start=style[2]; val mirror=style[3]==1
-            val extent=style[4]
-            image.layoutParams=image.layoutParams.apply { this.width=(extent*979f/1030f+0.5f).toInt() }
-            image.setImageBitmap(V5Artwork.artwork(source,width,radius,start,mirror,extent))
-            root.measure(ws,hs);root.layout(0,0,979,214);root.draw(canvas)
-            output.getPixels(actual,0,292,0,0,292,214)
-            var error=0.0
-            for(i in actual.indices) {
-                val a=actual[i];val b=target[i]
-                error+=kotlin.math.abs(((a shr 16) and 255)-((b shr 16) and 255))+
-                    kotlin.math.abs(((a shr 8) and 255)-((b shr 8) and 255))+kotlin.math.abs((a and 255)-(b and 255))
-            }
-            if(error<best){best=error;record=JSONObject().put("transitionWidth",width).put("blurRadius",radius).put("fadeStart",start).put("mirrorEdge",mirror).put("extent",extent).put("meanRgbError",error/(actual.size*3))}
-        }
-        return record.put("candidates",styles.size)
     }
 
     @androidx.annotation.RequiresApi(31)

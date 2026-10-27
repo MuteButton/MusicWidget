@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_container" android:layout_width="match_parent" android:layout_height="match_parent">
+    android:id="@+id/widget_container" android:importantForAccessibility="no" android:layout_width="match_parent" android:layout_height="match_parent">
     <ImageView android:id="@+id/glass_surface" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center" android:scaleType="fitXY" android:importantForAccessibility="no" android:contentDescription="@null" />
-    <FrameLayout android:id="@+id/idle_state" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center">
+    <FrameLayout android:id="@+id/idle_state" android:importantForAccessibility="no" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center">
         <TextView android:id="@+id/idle_title" android:layout_width="140dp" android:layout_height="20dp" android:includeFontPadding="false" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
         <TextView android:id="@+id/idle_subtitle" android:layout_width="140dp" android:layout_height="20dp" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" />
         <TextView android:id="@+id/btn_open" android:layout_width="95dp" android:layout_height="43dp" android:gravity="center" android:background="?android:attr/selectableItemBackgroundBorderless" android:maxLines="1" />
     </FrameLayout>
-    <FrameLayout android:id="@+id/media_state" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center" android:visibility="gone">
-        <ImageView android:id="@+id/album_art" android:layout_width="100dp" android:layout_height="78dp" android:scaleType="fitXY" android:contentDescription="@string/widget_open_player" />
-        <FrameLayout android:id="@+id/text_info" android:layout_width="118dp" android:layout_height="31dp">
-            <FrameLayout android:id="@+id/title_container" android:layout_width="match_parent" android:layout_height="42dp">
+    <FrameLayout android:id="@+id/media_state" android:importantForAccessibility="no" android:layout_width="match_parent" android:layout_height="82dp" android:layout_gravity="center" android:visibility="gone">
+        <ImageView android:id="@+id/album_art" android:importantForAccessibility="no" android:layout_width="100dp" android:layout_height="78dp" android:scaleType="fitXY" android:contentDescription="@string/widget_open_player" />
+        <FrameLayout android:id="@+id/text_info" android:importantForAccessibility="no" android:layout_width="118dp" android:layout_height="31dp">
+            <FrameLayout android:id="@+id/title_container" android:importantForAccessibility="no" android:layout_width="match_parent" android:layout_height="42dp">
                 <include layout="@layout/widget_title_static" />
             </FrameLayout>
             <TextView android:id="@+id/track_artist" android:layout_width="match_parent" android:layout_height="wrap_content" android:includeFontPadding="false" android:textScaleX="1.08" android:maxLines="1" android:ellipsize="end" android:textColor="#9897FF" />

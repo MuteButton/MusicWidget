@@ -175,7 +175,7 @@ internal object WidgetRenderer {
                 preferences.edit().putString(LAST_PLAYER, controller.packageName).apply()
             }
         }
-        // The v5 renderer has its own bounded crop; do not build an unused legacy cover.
+        // The v5 renderer has its own bounded crop; do not build an unused compact-layout cover.
         val artwork = if (ids.any { !v5(context, it) }) controller?.let { albumArt(it) } else null
         if (controller == null) { roundedArt = null; artGeneration = null; artToken = null }
         val manager = AppWidgetManager.getInstance(context)
@@ -299,12 +299,13 @@ internal object WidgetRenderer {
 
     private fun bindTitle(context: Context, views: RemoteViews, id: Int, controller: MediaController,
                           title: String, scroll: Boolean, widthOverride: Float? = null) {
-        if (Build.VERSION.SDK_INT < 31) return // Legacy layouts have no nested title.
+        if (Build.VERSION.SDK_INT < 31) return // Android 7?11 layouts have no nested title.
         val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val width = widthOverride ?: pillWidth(context, id)
         val label = RemoteViews(context.packageName,
             if (scroll) R.layout.widget_title_marquee else R.layout.widget_title_static)
         label.setTextViewText(R.id.track_title, title)
+        label.setContentDescription(R.id.track_title, context.getString(R.string.open_current_track, title))
         label.setTextViewTextSize(R.id.track_title, android.util.TypedValue.COMPLEX_UNIT_PX,
             RowLayout.TITLE_SIZE * width * context.resources.displayMetrics.density / (if (widthOverride != null) 1030f else WidgetSizing.CANVAS_WIDTH))
         if (scroll) {

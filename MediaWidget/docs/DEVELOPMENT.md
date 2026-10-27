@@ -48,7 +48,7 @@ Artwork glass is the default for the full v5 layout. A 48 x 48 cover sample supp
 
 Progress-only updates run approximately once per second during advancing playback with known duration. They stop when the screen is off, playback is paused, or no widget exists. Session and state changes update independently.
 
-Artwork sampling and derived covers are cached. Source bitmap references are weak; adaptive glass has a four-entry LRU and legacy surfaces have an eight-entry LRU. Media callbacks and notification destinations are removed when their sessions/notifications disappear and cleared on listener disconnect.
+Artwork sampling and derived covers are cached. Source bitmap references are weak; adaptive glass has a four-entry LRU and compact-layout surfaces have an eight-entry LRU. Media callbacks and notification destinations are removed when their sessions/notifications disappear and cleared on listener disconnect.
 
 See [NFR verification](../tools/NFR_VERIFICATION.md) for measured CPU, memory retention, thread/descriptor counts, and callback latency. These emulator measurements are not physical-device battery guarantees.
 

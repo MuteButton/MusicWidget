@@ -11,15 +11,6 @@ import androidx.annotation.RequiresApi
 internal object V5Artwork {
     private val assets = mutableMapOf<Int, Bitmap>()
     private val surfaces = mutableMapOf<Boolean, Bitmap>()
-    private var artSource = java.lang.ref.WeakReference<Bitmap>(null)
-    private var artGeneration = 0
-    private var artTransition = -1
-    private var artBlur = -1
-    private var artFadeStart = -1
-    private var artMirror = false
-    private var artExtent = -1
-    const val ART_EXTENT = 280
-    private var fadedArt: Bitmap? = null
     private var playingSkin: Bitmap? = null
     private var playSkin: Bitmap? = null
     private var missingCover: Bitmap? = null
@@ -192,7 +183,7 @@ internal object V5Artwork {
         place(R.id.text_info, RowLayout.CONTENT_LEFT, rowHeight * .20f, RowLayout.TITLE_WIDTH, 90f)
         place(R.id.title_container, 0f, 0f, RowLayout.TITLE_WIDTH, 44f)
         place(R.id.track_artist, 0f, 46f, RowLayout.TITLE_WIDTH, 40f)
-        listOf(R.id.btn_prev, R.id.btn_play, R.id.btn_next).zip(RowLayout.controls(rowHeight.toFloat())).forEach { (id, box) ->
+        listOf(R.id.btn_prev, R.id.btn_play, R.id.btn_next).zip(RowLayout.touchControls(rowHeight.toFloat(), canvasWidth / widthDp)).forEach { (id, box) ->
             place(id, box.x, box.y, box.width, box.height)
         }
         place(R.id.progress_container, RowLayout.CONTENT_LEFT, rowHeight - 73f, RowLayout.PROGRESS_WIDTH, 61f)
@@ -220,6 +211,28 @@ internal object V5Artwork {
         // Resize only the glass shell. Composite controls afterward with uniform
         // scaling so the extra row height never stretches their circles or glyphs.
         val shell = playing(context).copy(Bitmap.Config.ARGB_8888, true)
+        if (!media) {
+            // The playing skin's original circular cover repair leaves source-art
+            // pixels exposed between that circle and today's rounded rim.
+            // Fill the idle interior to the same contour as live album artwork.
+            val backing = Bitmap.createBitmap(307, 225, Bitmap.Config.ARGB_8888)
+            for (y in 0 until backing.height) {
+                val edge = shell.getPixel(307, y)
+                for (x in 0 until backing.width) {
+                    val t = x / 307f
+                    fun mix(start: Int, end: Int) = (start + (end - start) * t).toInt()
+                    backing.setPixel(x, y, Color.rgb(mix(23, Color.red(edge)),
+                        mix(66, Color.green(edge)), mix(130, Color.blue(edge))))
+                }
+            }
+            Canvas(shell).apply {
+                clipPath(Path().apply {
+                    addRoundRect(RectF(14f, 5f, 1015f, 220f), 80f, 80f, Path.Direction.CW)
+                })
+                drawBitmap(backing, 0f, 0f, Paint(Paint.FILTER_BITMAP_FLAG))
+            }
+            backing.recycle()
+        }
         // Soften the old raster repairs before relocating controls. Blend only
         // the interior; the original rim and outer transparency remain exact.
         val stride = shell.width + 1
@@ -383,55 +396,4 @@ internal object V5Artwork {
         return bitmap
     }
 
-    /** Legacy square-and-edge variants retained for reproducible debug calibration. */
-    fun artwork(source: Bitmap, transitionWidth: Int = 0, blurRadius: Int = 0,
-                fadeStart: Int = 215, mirrorEdge: Boolean = false, extent: Int = ART_EXTENT): Bitmap {
-        require(transitionWidth in 0..100 && blurRadius in 0..100 && extent in 215..320 && fadeStart in 0 until extent)
-        if (artSource.get() === source && artGeneration == source.generationId &&
-            artTransition == transitionWidth && artBlur == blurRadius && artFadeStart == fadeStart && artMirror == mirrorEdge && artExtent == extent) return fadedArt!!
-        val result = Bitmap.createBitmap(extent, 215, Bitmap.Config.ARGB_8888)
-        val c = Canvas(result)
-        val scale = 215f / minOf(source.width, source.height)
-        val shader = BitmapShader(source, if (mirrorEdge) Shader.TileMode.MIRROR else Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-        shader.setLocalMatrix(Matrix().apply {
-            setScale(scale, scale)
-            postTranslate((215 - source.width * scale) / 2f, (215 - source.height * scale) / 2f)
-        })
-        val p = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { this.shader = shader }
-        val path = Path().apply { addRoundRect(RectF(0f, 0f, extent.toFloat(), 215f), floatArrayOf(90f,90f,0f,0f,0f,0f,90f,90f), Path.Direction.CW) }
-        c.clipPath(path)
-        c.drawRect(0f, 0f, extent.toFloat(), 215f, p)
-        // Optional edge treatments are used by the debug calibration. The measured
-        // production defaults preserve the square cover, then fade its continuation.
-        val edgeColumn = IntArray(215) { result.getPixel(214, it) }
-        if (!mirrorEdge) for (y in 0 until 215) {
-            var red = 0; var green = 0; var blue = 0; var samples = 0
-            for (row in maxOf(0, y - blurRadius)..minOf(214, y + blurRadius)) {
-                val edge = edgeColumn[row]
-                red += Color.red(edge); green += Color.green(edge); blue += Color.blue(edge); samples++
-            }
-            val blurred = Color.rgb(red / samples, green / samples, blue / samples)
-            for (x in (215-transitionWidth) until extent) {
-                val original = result.getPixel(x, y)
-                val blend = if (transitionWidth == 0) 1f else ((x - (215-transitionWidth)) / transitionWidth.toFloat()).coerceIn(0f, 1f)
-                // Smoothstep gives the cover and continuation matching slopes.
-                val t = blend * blend * (3 - 2 * blend)
-                fun mix(a: Int, b: Int) = (a + (b - a) * t).toInt()
-                result.setPixel(x, y, Color.rgb(mix(Color.red(original), Color.red(blurred)),
-                    mix(Color.green(original), Color.green(blurred)), mix(Color.blue(original), Color.blue(blurred))))
-            }
-        }
-        p.shader = LinearGradient(fadeStart.toFloat(), 0f, extent.toFloat(), 0f, Color.WHITE, Color.TRANSPARENT, Shader.TileMode.CLAMP)
-        p.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
-        c.drawRect(0f, 0f, extent.toFloat(), 215f, p)
-        artSource = java.lang.ref.WeakReference(source)
-        artGeneration = source.generationId
-        artTransition = transitionWidth
-        artBlur = blurRadius
-        artFadeStart = fadeStart
-        artMirror = mirrorEdge
-        artExtent = extent
-        fadedArt = result
-        return result
-    }
 }
