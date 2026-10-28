@@ -57,14 +57,21 @@ $timeBefore=(Find-Node (Read-Ui) 'elapsed_time').text
 Fixture 'metadata' @('--es','title',(('.' * 60) + ('W' * 45)))
 Start-Sleep -Seconds 2
 $prefix=Title-Capture '00-playing-prefix'
-# UI hierarchy instrumentation can consume several seconds on a loaded emulator.
-# Keep it outside the animation capture window so the suffix is sampled before
-# the measured-width restoration, rather than testing the restored prefix.
-Start-Sleep -Seconds 4
-$suffix=Title-Capture '00-playing-suffix'
+# Sample a bounded interval: emulator load can delay the native animation.
+# Require actual travel into the dense suffix, not merely changing pixels.
+# Keep hierarchy instrumentation outside this interval because it stalls frames.
 $prefixCount=Glyph-Count $prefix
-$suffixCount=Glyph-Count $suffix
-@{prefixPixels=$prefixCount;suffixPixels=$suffixCount} | ConvertTo-Json | Set-Content (Join-Path $OutputDirectory 'playing-title-travel.json')
+$samples=[Collections.Generic.List[object]]::new()
+$suffixCount=0
+for($sample=1;$sample -le 6;$sample++) {
+    Start-Sleep -Seconds 2
+    $suffix=Title-Capture "00-playing-suffix-$sample"
+    $count=Glyph-Count $suffix
+    $samples.Add(@{sample=$sample;glyphPixels=$count})
+    $suffixCount=[Math]::Max($suffixCount,$count)
+    if($suffixCount -gt (2*$prefixCount)){break}
+}
+@{prefixPixels=$prefixCount;maximumSuffixPixels=$suffixCount;samples=$samples} | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $OutputDirectory 'playing-title-travel.json')
 Assert-True ($suffixCount -gt (2*$prefixCount)) 'Playing title reaches its distant suffix instead of restarting each second'
 Assert-True ((Find-Node (Read-Ui) 'elapsed_time').text -ne $timeBefore) 'Timer advances throughout the playing title slide'
 Fixture 'pause'
