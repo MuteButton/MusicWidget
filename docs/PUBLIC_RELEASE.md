@@ -4,7 +4,7 @@ Current readiness decision and open usability/device gates: [Current limitations
 
 ## Stable identity and phone installation
 
-The development build is OnCue 2.0, version code 17, with registered application
+The replacement release is OnCue 2.0, version code 17, with registered application
 ID `io.github.mutebutton.oncue`, minimum API 24 and target API 36. This build uses
 a newly generated OnCue certificate. It cannot update an installation signed by
 the prior certificate: uninstall the old app, install the new APK, grant notification
@@ -46,7 +46,7 @@ The owner-authorized setup saved a matching encrypted PKCS12 keystore and its re
 - The owner confirmed on October 23, 2026 that the supplied v5 design and README/demo artwork may be redistributed. The code's MIT license alone does not establish image rights. Keep that confirmation with release records.
 - The resolved production dependency scan uses OSV and sends Maven coordinates only. No advisory results are a database snapshot, not a guarantee of no vulnerabilities.
 
-Published historical release (uses the previous certificate): [OnCue 2.0](RELEASE_2.0.md).
+Current release: [OnCue 2.0](RELEASE_2.0.md).
 
 ## Automated verification
 

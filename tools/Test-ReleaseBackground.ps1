@@ -77,6 +77,7 @@ function CheckLive([string]$Label) {
     $count=(State).pauseCount
     Tap-Node 'btn_play'
     Assert-Eventually { (State).pauseCount -eq $count+1 } "$Label Pause dispatches exactly once"
+    Assert-Eventually { (Find-Node (Read-Ui) 'btn_play').'content-desc' -eq 'Play' } "$Label launcher receives paused state"
     $frozen=(Find-Node (Read-Ui) 'elapsed_time').text
     Start-Sleep -Seconds 2
     Assert-True ((Find-Node (Read-Ui) 'elapsed_time').text -eq $frozen) "$Label paused progress is stable"

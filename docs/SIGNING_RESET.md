@@ -21,6 +21,6 @@ The old signing material is preserved privately. New recovery material is in
 Documents/OnCue signing backup with restricted access. Copy it to an encrypted
 off-device vault; the local recovery password file is plaintext.
 
-The newly signed APK is a local candidate, not a replacement for published 2.0.
-Build, unit tests, release lint and Android smoke tests are required; these are
-not a claim of full media integration regression on this new signing identity.
+This signing reset is used by the replacement 2.0 build (version code 17).
+Consult the GitHub release verification attachment for results tied to the exact
+APK hash. Published 1.0 and historical Git commits retain their original identity.

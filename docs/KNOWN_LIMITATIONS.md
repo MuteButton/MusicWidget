@@ -33,12 +33,13 @@ not shipped.
 
 ## Verification scope
 
-The exact signed 2.0 APK passed 41 core emulator checks. The preceding functionally
-equivalent candidate also passed 13 marquee and five touch/label checks. Physical
-Samsung layout and real-player checks are separate evidence. CI smoke checks cover
-API 24, 31 and 36. These results do not certify every device, launcher or player.
-Memory/performance samples and forced lifecycle tests do not replace extended
-physical-device battery testing.
+The final 4?1 signed 2.0 APK passed 41 core checks, 62 forced background/lifecycle
+checks and 11 real-Chrome checks. Physical Samsung testing verified one-row
+placement, YouTube Music pause/resume, timer progression, player routing,
+return-home and unlock recovery. CI smoke checks cover API 24, 31 and 36.
+The release verification attachment identifies the exact APK and focused-suite
+results. These checks do not certify every device, launcher or player, full
+TalkBack accessibility, or overnight physical-device battery consumption.
 
 Controls, artwork, timing and browser destinations depend on information supplied
 by the media player. A player may report incomplete or stale information.
