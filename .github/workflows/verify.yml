@@ -21,6 +21,8 @@ jobs:
       - name: Repository hygiene
         shell: pwsh
         run: ./tools/Test-RepositoryHygiene.ps1
+      - name: Resource variant consistency
+        run: python tools/check_resource_variants.py
       - name: Build and JVM checks (no production signing secrets in CI)
         run: |
           chmod +x gradlew

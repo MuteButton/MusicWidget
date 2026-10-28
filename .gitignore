@@ -61,3 +61,7 @@ out/
 *.keystore
 *.jks
 keystore.properties
+
+# Python helper bytecode
+__pycache__/
+*.pyc

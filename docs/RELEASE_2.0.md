@@ -1,13 +1,21 @@
 # OnCue 2.0
 
-Current main and release/2.0 contain the fully renamed OnCue app (version code 17).
-The application ID remains `io.github.mutebutton.oncue`. This replaces the earlier
-2.0 build with the new OnCue signing identity and renamed components/settings.
-Existing installs signed by the previous certificate must be uninstalled first.
-Enable notification access and add the widget again after installation.
-See [signing reset](SIGNING_RESET.md) for the public registration fingerprint.
+The updated 2.0 build uses version code 18 and application ID
+`io.github.mutebutton.oncue`. It retains the current OnCue signing certificate,
+so it installs over the previous version-code-17 OnCue build without resetting
+settings. Much older installs with a different certificate require reinstalling;
+see [signing reset](SIGNING_RESET.md).
 
-Includes adaptive glass colors, live media controls and progress, title marquee,
-player/browser routing, refined touch areas and the corrected idle rim.
-See [known limitations](KNOWN_LIMITATIONS.md) for battery, accessibility and
-verification boundaries. Historical 1.0 remains on release/1.0.
+This update clarifies notification access and recommends unrestricted background
+battery usage for more reliable timestamps on all devices, with Samsung-specific
+navigation instructions. It also adds Android 7 fallback launcher icons and
+checks for mismatched widget resource overrides. Widget appearance and playback
+logic are unchanged. Android 12+ defaults to a 4-by-1 widget.
+
+Verification of this update focuses on setup, settings links, resources, and a
+physical Samsung widget smoke check. The previous APK passed 170 emulator checks;
+that full suite is not claimed as rerun on this APK. See the release attachment
+`VERIFICATION.txt` for its exact identity and validation scope.
+
+See [known limitations](KNOWN_LIMITATIONS.md) for battery and accessibility
+boundaries. Historical 1.0 remains on release/1.0.

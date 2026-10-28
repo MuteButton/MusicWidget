@@ -40,7 +40,7 @@ if(-not $destination){$destination=@($launchPreferences.map.string | Where-Objec
 Tap-Node 'btn_open'
 if($destination){Wait-Activity ('ResumedActivity.*'+[regex]::Escape($destination)) | Out-Null}
 $ui = Read-Ui
-$chooser=$null -ne $ui.SelectSingleNode("//node[@text='Choose media app']")
+$chooser=$null -ne $ui.SelectSingleNode("//node[@text='Choose default media app']")
 $playerVisible=$false
 if (-not $chooser) {
     $preferences=[xml](Invoke-Adb @('shell','run-as','io.github.mutebutton.oncue','cat','shared_prefs/oncue_widget.xml'))

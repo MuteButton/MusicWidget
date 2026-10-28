@@ -1,7 +1,7 @@
 <resources>
     <string name="browser_url_title">Open URL (optional)</string>
     <string name="browser_url_default">No URL set. Open App launches the browser normally.</string>
-    <string name="browser_url_help">When no media session is available, Open App opens this address in your selected browser. Leave blank to open the browser normally. Active media still opens its own player.</string>
+    <string name="browser_url_help">When the widget shows Open App, this address opens in your selected browser. Leave blank to open the browser normally. When a player is active, the widget opens that player instead.</string>
     <string name="browser_url_save">Save</string>
     <string name="browser_url_invalid">Enter a valid http or https address, such as music.youtube.com.</string>
 </resources>

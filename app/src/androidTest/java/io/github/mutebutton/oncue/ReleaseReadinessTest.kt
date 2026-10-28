@@ -36,6 +36,15 @@ class ReleaseReadinessTest {
         assertFalse("Widget must not gain network access silently", permissions.contains("android.permission.INTERNET"))
     }
 
+    @Test fun launcherIconsResolveOnEverySupportedApi() {
+        // loadIcon can silently return Android's default icon: resolve directly.
+        val info = context.applicationInfo
+        assertEquals("OnCue", context.packageManager.getApplicationLabel(info).toString())
+        assertTrue(info.icon != 0)
+        assertNotNull(context.getDrawable(info.icon))
+        assertNotNull(context.getDrawable(R.mipmap.ic_launcher_round))
+    }
+
     @Test fun renamedComponentsAreRegistered() {
         val manager = context.packageManager
         val listener = manager.getServiceInfo(
@@ -45,7 +54,7 @@ class ReleaseReadinessTest {
         val provider = manager.getReceiverInfo(
             android.content.ComponentName(context, OnCueWidgetProvider::class.java), PackageManager.GET_META_DATA)
         assertEquals("io.github.mutebutton.oncue.OnCueWidgetProvider", provider.name)
-        assertTrue(provider.metaData.getInt("android.appwidget.provider") != 0)
+        assertEquals(R.xml.oncue_widget_info, provider.metaData.getInt("android.appwidget.provider"))
     }
 
     @Test fun modernWidgetDefaultsToFourByOne() {
@@ -70,9 +79,63 @@ class ReleaseReadinessTest {
             }
             return result
         }
-        val settings = "sharedpref" to "oncue_widget.xml"
+        val settings = "sharedpref" to "${WidgetRenderer.PREFS}.xml"
         assertEquals(listOf(settings), includes(R.xml.backup_rules))
         assertEquals(listOf(settings, settings), includes(R.xml.data_extraction_rules))
+    }
+
+    @Test fun setupExplainsAccessAndPlacesBatteryBeforeCustomization() {
+        ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
+            scenario.onActivity { activity ->
+                val help = activity.findViewById<android.widget.TextView>(R.id.notification_help)
+                assertEquals(View.VISIBLE, help.visibility)
+                assertTrue(help.text.contains("does not save notification messages"))
+                val battery = activity.findViewById<View>(R.id.battery_section)
+                assertEquals(View.VISIBLE, battery.visibility)
+                assertEquals(if (Build.MANUFACTURER.equals("samsung", true)) View.VISIBLE else View.GONE,
+                    activity.findViewById<View>(R.id.battery_device_steps).visibility)
+                val parent = battery.parent as android.view.ViewGroup
+                assertTrue(parent.indexOfChild(battery) > parent.indexOfChild(activity.findViewById(R.id.grant_button)))
+                assertTrue(parent.indexOfChild(battery) < parent.indexOfChild(activity.findViewById(R.id.add_widget_button)))
+                assertTrue(parent.indexOfChild(battery) < parent.indexOfChild(activity.findViewById(R.id.color_mode_button)))
+            }
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            val screenshot = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+            context.openFileOutput("setup-guidance.png", Context.MODE_PRIVATE).use {
+                screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+            }
+            screenshot.recycle()
+            onView(withId(R.id.setup_root)).perform(swipeUp())
+            onView(withId(R.id.battery_settings_button)).check(matches(isDisplayed()))
+        }
+    }
+
+    @Test fun setupButtonsOpenRealSystemSettings() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        fun activities(): String = android.os.ParcelFileDescriptor.AutoCloseInputStream(
+            instrumentation.uiAutomation.executeShellCommand("dumpsys activity activities")
+        ).bufferedReader().use { it.readText() }
+        for (button in listOf(R.id.grant_button, R.id.battery_settings_button)) {
+            ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
+                scenario.onActivity { activity ->
+                    activity.findViewById<Button>(button).performClick()
+                }
+                val deadline = android.os.SystemClock.elapsedRealtime() + 10000
+                var dump = activities()
+                while (!dump.lineSequence().any { it.contains("ResumedActivity") && it.contains("com.android.settings") }
+                    && android.os.SystemClock.elapsedRealtime() < deadline) {
+                    android.os.SystemClock.sleep(200)
+                    dump = activities()
+                }
+                assertTrue("System settings must be foreground", dump.lineSequence().any {
+                    it.contains("ResumedActivity") && it.contains("com.android.settings") })
+                if (button == R.id.battery_settings_button) {
+                    assertTrue("App details must target OnCue", dump.contains("package:${context.packageName}"))
+                }
+                instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+                instrumentation.waitForIdleSync()
+            }
+        }
     }
 
     @Test fun privacyIsReachableAndSetupStaysInsideSystemInsets() {
@@ -89,6 +152,10 @@ class ReleaseReadinessTest {
             // Exercise a user gesture; requestRectangleOnScreen-based scrollTo can
             // stop underneath system insets on Android 16's edge-to-edge window.
             onView(withId(R.id.setup_root)).perform(swipeUp())
+            scenario.onActivity { activity ->
+                activity.findViewById<android.widget.ScrollView>(R.id.setup_root).fullScroll(View.FOCUS_DOWN)
+            }
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
             onView(withId(R.id.privacy_button)).check(matches(isDisplayed())).perform(click())
             onView(withId(android.R.id.message)).check(matches(withText(containsString("Developer: MuteButton"))))
             onView(withId(android.R.id.button1)).check(matches(isDisplayed())).perform(click())

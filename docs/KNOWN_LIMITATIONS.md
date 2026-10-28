@@ -33,7 +33,7 @@ not shipped.
 
 ## Verification scope
 
-The final 4-by-1 signed 2.0 APK passed 41 core checks, 62 forced background/lifecycle
+The preceding version-code-17 4-by-1 signed 2.0 APK passed 41 core checks, 62 forced background/lifecycle
 checks and 11 real-Chrome checks. Physical Samsung testing verified one-row
 placement, YouTube Music pause/resume, timer progression, player routing,
 return-home and unlock recovery. CI smoke checks cover API 24, 31 and 36.

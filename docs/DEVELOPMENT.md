@@ -28,6 +28,16 @@ After installation, open the app, grant notification access through its setup ac
 | `ArtworkColors` | Derive a palette from cover art and cache recolored glass surfaces |
 | `MainActivity` | Notification-access setup, preferred player, browser URL, and color choices |
 
+## Setup guidance
+
+Notification access is required for media information and controls; its purpose
+and privacy explanation remain visible after access is granted. On all devices,
+the next setup section recommends unrestricted background battery usage for more
+reliable live timestamps and links to OnCue app details. Samsung-specific steps
+appear on Samsung devices. It explains possible increased battery use and the
+Optimized-mode freeze risk without claiming to detect the current battery setting. Setup links
+are exercised against real Android Settings in instrumentation tests.
+
 ## Playback and navigation
 
 The widget switches between playback, idle, and permission-recovery states. Controls use the selected session's supported actions. Elapsed time and remaining time follow playback position; unknown-duration media hides progress. The bar is not a seek control.
@@ -51,6 +61,14 @@ Progress-only updates run approximately once per second during advancing playbac
 Artwork sampling and derived covers are cached. Source bitmap references are weak; adaptive glass has a four-entry LRU and compact-layout surfaces have an eight-entry LRU. Media callbacks and notification destinations are removed when their sessions/notifications disappear and cleared on listener disconnect.
 
 See [NFR verification](../tools/NFR_VERIFICATION.md) for measured CPU, memory retention, thread/descriptor counts, and callback latency. These emulator measurements are not physical-device battery guarantees.
+
+## Resource consistency
+
+Run `python tools/check_resource_variants.py` after changing resource names or
+manifest metadata. CI checks that every widget XML variant matches the manifest,
+that the Android 12+ 4-by-1 override exists, and that launcher icons have a
+version-independent fallback. Runtime release-readiness tests also resolve the
+icons directly and verify provider registration and backup preference paths.
 
 ## Test on an emulator
 
@@ -77,7 +95,7 @@ See [OnCue 2.0 release notes](RELEASE_2.0.md) for the delivered APK identity and
 Install the signed release and `tools/test-player/build/outputs/apk/debug/test-player-debug.apk`, enable notification access, and add a full-width widget. A release signing certificate different from an installed debug build requires uninstalling that debug build first (which removes its settings and widgets). Run from the repository root:
 
 ```powershell
-.\tools\Test-ReleaseApk.ps1 -Apk artifacts/oncue-release/OnCue-1.2.apk
+.\tools\Test-ReleaseApk.ps1 -Apk artifacts/oncue-release/OnCue-2.0.apk
 .\tools\Test-WidgetMarquee.ps1 -FixturePackage io.github.mutebutton.oncue.testplayer
 adb shell am force-stop io.github.mutebutton.oncue.testplayer
 .\tools\Test-RealChrome.ps1 -ReleaseApk

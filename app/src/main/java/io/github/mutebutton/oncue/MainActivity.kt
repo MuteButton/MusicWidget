@@ -28,15 +28,11 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         ViewCompat.requestApplyInsets(findViewById(R.id.setup_root))
-        if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) {
-            findViewById<View>(R.id.battery_help).visibility = View.VISIBLE
-            findViewById<Button>(R.id.battery_settings_button).apply {
-                visibility = View.VISIBLE
-                setOnClickListener {
-                    startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.parse("package:$packageName")))
-                }
-            }
+        findViewById<View>(R.id.battery_device_steps).visibility =
+            if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) View.VISIBLE else View.GONE
+        findViewById<Button>(R.id.battery_settings_button).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:$packageName")))
         }
         findViewById<Button>(R.id.privacy_button).setOnClickListener {
             AlertDialog.Builder(this).setTitle(R.string.privacy_title)

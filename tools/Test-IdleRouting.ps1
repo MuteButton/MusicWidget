@@ -36,7 +36,7 @@ try {
     Invoke-Adb @('shell','am','force-stop','com.google.android.youtube') | Out-Null
     Set-Routing '' ''
     Tap-Node 'btn_open'
-    Assert-Eventually { $null -ne (Read-Ui).SelectSingleNode("//node[@text='Choose media app']") } 'No preferred or remembered app opens the player chooser'
+    Assert-Eventually { $null -ne (Read-Ui).SelectSingleNode("//node[@text='Choose default media app']") } 'No preferred or remembered app opens the player chooser'
     Screenshot 'idle-player-chooser'
 } finally {
     Invoke-Adb @('shell','am','force-stop','io.github.mutebutton.oncue') | Out-Null
