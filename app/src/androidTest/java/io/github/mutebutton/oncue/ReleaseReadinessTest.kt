@@ -132,7 +132,11 @@ class ReleaseReadinessTest {
                 if (button == R.id.battery_settings_button) {
                     assertTrue("App details must target OnCue", dump.contains("package:${context.packageName}"))
                 }
-                instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+                // Settings is another UID: ordinary instrumentation key injection is
+                // rejected on older Android. Use the UI automation shell instead.
+                android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                    instrumentation.uiAutomation.executeShellCommand("input keyevent KEYCODE_BACK")
+                ).use { it.readBytes() }
                 instrumentation.waitForIdleSync()
             }
         }
