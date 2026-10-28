@@ -48,6 +48,16 @@ class ReleaseReadinessTest {
         assertTrue(provider.metaData.getInt("android.appwidget.provider") != 0)
     }
 
+    @Test fun modernWidgetDefaultsToFourByOne() {
+        if (Build.VERSION.SDK_INT < 31) return
+        context.resources.getXml(R.xml.oncue_widget_info).use { xml ->
+            while (xml.eventType != XmlPullParser.START_TAG) xml.next()
+            val android = "http://schemas.android.com/apk/res/android"
+            assertEquals("4", xml.getAttributeValue(android, "targetCellWidth"))
+            assertEquals("1", xml.getAttributeValue(android, "targetCellHeight"))
+        }
+    }
+
     @Test fun backupIncludesOnlySettingsOnOldAndNewAndroid() {
         fun includes(resource: Int): List<Pair<String?, String?>> {
             val result = mutableListOf<Pair<String?, String?>>()

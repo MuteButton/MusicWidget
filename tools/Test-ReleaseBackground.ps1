@@ -84,7 +84,7 @@ function CheckLive([string]$Label) {
     Assert-Eventually { (State).playing } "$Label resumes playback"
 }
 try {
-    Invoke-Adb @('shell','am','start','-W','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
+    Invoke-Adb @('shell','am','start','-W','-f','0x10008000','-n',"$FixturePackage/io.github.mutebutton.oncue.debug.DebugMediaActivity",'--es','command','reset') | Out-Null
     Home
     CheckLive 'Baseline'
     Memory 'warm'
